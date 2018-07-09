@@ -1,0 +1,37 @@
+<extend name="Base:layout_frame"/>
+<block name="css">
+    <link href="__PUBLIC__/css/Home/user/deny.css" rel='stylesheet' type='text/css'/>
+</block>
+<block name="content">
+
+    <div class="">
+        <div class="col-md-2">
+            <div id="myTabContent" class="tab-content">
+                <div class="tab-pane active in" id="home">
+                    <form id="formId" method="post" name='formId' action='{:U("Home/User/denyRealAudit")}'>
+                        <input type="hidden" name="auditId" value="<?=$auditId?>"/>
+
+                        <div class="form-group">
+                            <div class="choose-label">错误类型</div>
+                            {:W('Config/Select',array('tb_realaudit_refuse_type','refuse_type',1))}
+                        </div>
+                        <div class="form-group">
+                            <div class="choose-label">具体备注</div>
+                            <textarea name="description" rows="6" class="form-control"></textarea>
+                        </div>
+
+
+                    </form>
+                </div>
+				<div class="line"></div>
+                <div class="choose-btn">
+                <button class="btn btn-primary yes" onclick="fromSubmit('formId','noTab,alreadyTab')">
+                </button>
+                <button class="btn btn-primary no" onclick="var index = parent.layer.getFrameIndex(window.name); //先得到当前iframe层的索引
+                    parent.layer.close(index); //再执行关闭">
+                </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</block>

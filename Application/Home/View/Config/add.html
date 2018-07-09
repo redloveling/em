@@ -1,0 +1,66 @@
+<extend name="Base:layout_frame"/>
+
+<block name="content">
+
+    <div class="frame-first-div">
+            <div class="col-md-2">
+                <div id="myTabContent" class="tab-content">
+                    <div class="tab-pane active in" id="home">
+                        <form id="formId" method="post" name='formId' action='{:U("Home/Config/add")}'>
+                            <input type="hidden" name="tableName" value="<?=$tableName?>"/>
+                            <div class="form-group">
+                                <label>名称</label>
+                                <input type="text" name="name" value="" class="form-control">
+                            </div>
+
+                            <?php if($tableName=='tb_work_area'){?>
+                            <div class="form-group">
+                                <label>所属层级</label>
+                                <div>
+                                    <?php $workAreaLevel = C('work_area_level');?>
+                                    <?php foreach($workAreaLevel as $value){?>
+                                    <label class="checkbox-inline">
+                                        <input type="radio" name="type" id="inlineCheckbox<?=$value['id']?>" <?php if($value['id']==3){echo 'checked="true"';}?>value="<?=$value['id']?>"><?=$value['name']?>
+                                    </label>
+                                    <?php }?>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>所属省份</label>
+                                <!--{:W('ConfigSelect/Index',array('tb_work_area','pid',0,array('pid'=>0)))}-->
+
+                                {:W('Select/workAreaSingle',array('tb_work_area','province',1,array('type'=>1)))}
+
+                            </div>
+                            <div class="form-group">
+                                <label>所属城市</label>
+                                <!--{:W('ConfigSelect/Index',array('tb_work_area','pid',0,array('pid'=>0)))}-->
+
+                                {:W('Select/workAreaSingle',array('tb_work_area','city',2,array('type'=>2)))}
+
+                            </div>
+                            <?php }?>
+                            <div class="form-group">
+                                <label>状态</label>
+                                <span class="form-control">
+                                <label style="width: 100px"><input type="radio" name="status" value="1" checked/>正常</label>
+                                <label><input type="radio" name="status" value="0"/>禁用</label>
+                                </span>
+                            </div>
+
+                            <div class="form-group">
+                                <label>描述</label>
+                                 <textarea name="description"  rows="3" class="form-control"></textarea>
+                            </div>
+
+
+                        </form>
+                    </div>
+
+
+                </div>
+                <br>
+                <button class="ok-btn center-block" onclick="fromSubmit('formId','<?=$tableName?>Tab')"></button>
+        </div>
+    </div>
+</block>

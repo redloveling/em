@@ -1,0 +1,34 @@
+<extend name="Base:layout_frame"/>
+
+<block name="content">
+
+    <div class="" style="padding-top: 15px">
+        <div class="col-md-2">
+            <div id="myTabContent" class="tab-content">
+                <div class="tab-pane active in" id="home">
+                    <form id="formId" method="post" name='formId' action='{:U("AdminRole/add")}'>
+                        <div class="form-group">
+                            <label>角色名</label>
+                            <input type="text" name="name" value="" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            {:W('Select/business')}
+                        </div>
+                        <div class="form-group">
+                            <label>状态</label>
+                                <span class="form-control">
+                                <label style="width: 100px"><input type="radio" name="status" value="1" checked/>正常</label>
+                                <label><input type="radio" name="status" value="0"/>禁用</label>
+                                </span>
+                        </div>
+
+                    </form>
+                </div>
+
+
+            </div>
+            <br/>
+            <button class="ok-btn center-block" onclick="fromSubmit('formId')"></button>
+        </div>
+    </div>
+</block>

@@ -1,0 +1,38 @@
+<extend name="Base:layout_frame"/>
+<block name="js">
+    <script type="application/javascript" src="__PUBLIC__/js/Home/task/index.js"></script>
+</block>
+<block name="css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/Home/task/add.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/Home/user/picture.css">
+</block>
+
+<block name="content">
+    <div class="picture">
+        <input type="hidden" name="id" value="<?=$vo['id']?>"/>
+            <div id="register-info" class="panel-collapse panel-body collapse in">
+                    <div class="row">
+                        <div class="col-xs-12 col-sm-2 col-md-2">
+                            <div class="card-lab">身份证正面</div>
+                        </div>
+                        <div class="col-xs-12 col-sm-10 col-md-10">
+                            <img src="<?=$vo['card_num_positive']?>" onerror="this.src='__PUBLIC__/images/no_image.png'" >
+                        </div>
+
+                    </div>
+                    <div class="row">
+
+                        <div class="col-xs-12 col-sm-2 col-md-2">
+                            <div class="card-lab">身份证反面</div>
+                        </div>
+                        <div class="col-xs-12 col-sm-10 col-md-10">
+                            <img src="<?=$vo['card_num_opposite']?>" onerror="this.src='__PUBLIC__/images/no_image.png'" >
+                        </div>
+                    </div>
+
+            </div>
+
+
+
+    </div>
+</block>

@@ -1,0 +1,67 @@
+<extend name="Base:layout_frame"/>
+<block name="js">
+    <script src="__PUBLIC__/js/home/settlement/tasksettlement.js" type="text/javascript"></script>
+
+</block>
+<block name="css">
+</block>
+
+<block name="content">
+    <style>
+        #tab tr td{
+           text-align: center;
+            min-width: 50px;
+            height: 36px;
+        }
+        #title td{
+            color: grey;
+        }
+
+    </style>
+    <div>
+        <div class="task-detail" style="border-top:1px solid #99cde1; ">
+            <table id="tab" border="1" style="margin: 2px">
+                <tr id="title">
+                    <td>姓名</td>
+                    <td>电话</td>
+                    <td>身份证</td>
+                    <td>银行卡号</td>
+                    <td>银行</td>
+                    <?php for($i=1;$i<=$count;$i++){?>
+                        <td>单价<?=$i?></td>
+                        <td>数量<?=$i?></td>
+                        <td>小计<?=$i?></td>
+                    <?php }?>
+                    <td>奖励</td>
+                    <td>扣款</td>
+                    <td>提成</td>
+                    <td style="width: 100px">实得金额</td>
+                    <td>备注</td>
+                </tr>
+                <?php foreach($list as $value){?>
+                <tr>
+                    <td><?=$value['username']?></td>
+                    <td><?=$value['tell']?></td>
+                    <td><?=$value['card_num']?></td>
+                    <td><?=$value['bank_num']?></td>
+                    <td><?=$value['bank_name']?></td>
+
+                    <?php $arr = $value['serialize']; foreach($arr['price'] as $k=>$v){?>
+                    <td><?=$v?></td>
+                    <td><?=$arr['count'][$k]?></td>
+                    <td><?=$arr['money'][$k]?></td>
+                    <?php }?>
+
+
+                    <td><?=$value['reward']?></td>
+                    <td><?=$value['debit']?></td>
+                    <td><?=$value['commission']?></td>
+                    <td><?=$value['current_money']?></td>
+                    <td><input style="height: 36px" type="text" value="<?=$value['remark']?>" onchange="settlementRemark(<?=$value['id']?>,this)"/></td>
+
+                </tr>
+                <?php }?>
+            </table>
+        </div>
+    </div>
+</block>

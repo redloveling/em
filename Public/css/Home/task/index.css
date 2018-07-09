@@ -1,0 +1,93 @@
+
+.task-title-div
+{display:block; width:212px; height:92px; overflow:hidden; margin-right:10px; border: 1px solid #dedede;background-color: #FFFFFF;float: left; border-radius:5px 5px 0px 0px;}
+
+.task-title-div>.status{
+    display:block; width:100%; height:32px; overflow:hidden;  text-indent:24px; font-size:14px; padding:0px; line-height:32px; font-weight:600; border-bottom: 1px solid #dedede;
+}
+
+.task-title-div>.lab>img{
+    width:44px; height:44px; overflow:hidden; margin:6px 14px 8px 23px; float:left;
+}
+.task-title-div>.lab>span{
+    display:block; width:auto; max-width:100px; height:58px; overflow:hidden; font-size: 20px;color: #569bcc; float:left; line-height:58px;
+
+}
+.task-title-div>.lab>font{
+    display:block; width:auto; max-width:19px; height:58px; overflow:hidden;font-size: 16px;color: #909090;margin-left:10px;float:left; line-height:58px;
+}
+
+#task-title-id-no .active{
+    background-color: #df5a48;
+}
+#task-title-id-already .active{
+    background-color: #878787;
+}
+#task-title-id-all .active{
+	background-color: #569bcc;
+}
+#task-title-id-black .active{
+	background-color: #d75948;
+}
+#task-title-id-real .active{
+    background-color: #78bf6f ;
+}
+#task-title-id-pay .active{
+    background-color: #45c2ca;
+}
+#task-title-id-task .active{
+	background-color: #569BCC;
+}
+#task-title-id-task_0 .active{
+	background-color: #DF5A48;
+}
+#task-title-id-task_1 .active{
+	background-color: #97C646;
+}
+#task-title-id-task_2 .active{
+	background-color: #2EAFBB;
+}
+#task-title-id-task_3 .active{
+	background-color: #878787;
+}
+.task-title-div .active font{
+    color: #FFFFFF;
+}
+.tab-div-pan{
+    display: none;
+}
+.active-pan{
+    display: block;
+}
+.table-list span.list-status
+{ display:block; margin-top:16px;}
+.task-list-new{
+    padding: 10px;
+    padding-bottom: 0px;
+    margin-top: 10px;
+    border-top: 1px dashed #dfdfdf;
+
+}
+.task-list-new span{
+    font-size:  14px;
+    font-weight: bold;
+    color: #494949;
+}
+/*.task-title-div .active{
+    background-color: #569bcc;
+}*/
+.task-title-div .active font{
+    color: #FFFFFF;
+}
+.tab-div-pan{
+    padding-top: 15px;
+    display: none;
+}
+.active-pan{
+    display: block;
+}
+.tab-div-pan .span-title{
+    font-size: 16px;
+    font-weight: bold;
+    color: #494949;
+}

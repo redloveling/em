@@ -1,0 +1,12 @@
+[ 2017-08-08T08:20:10+00:00 ] ::1 /index.php/UserTask/passApply/
+00001: 2017-08-08 08:20 用户 [1] 1 更新 成功 ==>INSERT INTO `em_message` (`type`,`send_uid`,`get_uid`,`content`,`create_time`,`create_uid`,`task_id`,`title`) VALUES ('2','1','10','恭喜，你关于左燕测试001任务的报名通过啦~\\(≧▽≦)/~','1502180410','1','47','左燕测试001') || URL=/index.php/UserTask/passApply/
+[ 2017-08-08T08:20:10+00:00 ] ::1 /index.php/UserTask/passApply/
+00001: 2017-08-08 08:20 用户 [1] 1 更新 成功 ==>INSERT INTO `em_user_task_log` (`user_id`,`username`,`task_id`,`title`,`business_id`,`operator_id`,`create_time`,`msg`) VALUES ('10','15983322413','47','左燕测试001','1','1','1502180410','报名通过') || URL=/index.php/UserTask/passApply/
+[ 2017-08-08T08:20:10+00:00 ] ::1 /index.php/UserTask/passApply/
+00001: 2017-08-08 08:20 用户 [1] 1 更新 成功 ==>UPDATE `em_user_task` SET `status_1`='3',`status_msg`='报名成功',`modify_time`='1502180410',`pass_time`='1502180410' WHERE `user_id` IN ('10') AND `task_id` = 47 AND `status_1` IN (1,2,3) AND `status` = 1 || URL=/index.php/UserTask/passApply/
+[ 2017-08-08T08:28:35+00:00 ] ::1 /index.php/UserTask/passApply/
+00001: 2017-08-08 08:28 用户 [1] 1 更新 成功 ==>INSERT INTO `em_message` (`type`,`send_uid`,`get_uid`,`content`,`create_time`,`create_uid`,`task_id`,`title`) VALUES ('2','1','24','恭喜，你关于左燕测试001任务的报名通过啦~\\(≧▽≦)/~','1502180914','1','47','左燕测试001') || URL=/index.php/UserTask/passApply/
+[ 2017-08-08T08:28:35+00:00 ] ::1 /index.php/UserTask/passApply/
+00001: 2017-08-08 08:28 用户 [1] 1 更新 成功 ==>INSERT INTO `em_user_task_log` (`user_id`,`username`,`task_id`,`title`,`business_id`,`operator_id`,`create_time`,`msg`) VALUES ('24','15928505795','47','左燕测试001','1','1','1502180915','报名通过') || URL=/index.php/UserTask/passApply/
+[ 2017-08-08T08:28:35+00:00 ] ::1 /index.php/UserTask/passApply/
+00001: 2017-08-08 08:28 用户 [1] 1 更新 成功 ==>UPDATE `em_user_task` SET `status_1`='3',`status_msg`='报名成功',`modify_time`='1502180915',`pass_time`='1502180915' WHERE `user_id` IN ('24') AND `task_id` = 47 AND `status_1` IN (1,2,3) AND `status` = 1 || URL=/index.php/UserTask/passApply/

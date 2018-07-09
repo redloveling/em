@@ -1,0 +1,6 @@
+.mytab
+{ width:100%; height:48px; border-bottom:1px solid #ddd;}
+.mytab tr td,.mytab tr th
+{ display:block; width:112px; height:48px; line-height:48px; float:left; border-top:0px;}
+.mytab tr td .checklabelstyle
+{ float:left; margin:16px 5px;}

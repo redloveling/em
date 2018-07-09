@@ -1,0 +1,35 @@
+<extend name="Base:layout"/>
+<block name="js">
+    <script src="__PUBLIC__/js/home/user/realaudit.js" type="text/javascript"></script>
+
+</block>
+<block name="css">
+    <link href="__PUBLIC__/css/Home/user/realandpayaudit.css" rel='stylesheet' type='text/css'/>
+
+   
+</block>
+<block name="content">
+ 	<div class="title-span">
+        <div>用户管理>实名审核</div>
+    </div>
+    <?php foreach($realauditTabList as $key=>$value){ $tableNames .= $value['id'].','?>
+    <div  class="task-title-div tab-div" id="task-title-id-<?=$value['id']?>" onclick="activeThis(this);changeTabDiv('tab-div-pan-<?=$value['id']?>')">
+        <div class="status-title status <?php if($value['checked']==1){ echo 'active';}?>"><font><?=$value['name']?></font></div>
+        <div class="lab">
+            <img src="__PUBLIC__/images/user/<?=$value['img']?>">
+            <span id="count_real_<?=$value['id']?>"></span><font>条</font>
+        </div>
+    </div>
+    <?php }?>
+    <div class="table-list">
+        <div class="main-content ">
+            <?php foreach($realauditTabList as $key=>$value){?>
+            <div class="tab-div-pan <?php if($value['checked']==1){ echo 'active-pan';}?>" id="tab-div-pan-<?=$value['id']?>"  >
+                
+                <table id="<?=$value['id'].'Tab'?>" data-toggle="table">
+                </table>
+            </div>
+            <?php }?>
+         </div>
+    </div>
+</block>

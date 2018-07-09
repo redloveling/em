@@ -1,0 +1,51 @@
+body{
+    background:url(../../images/login/bg_login.png) repeat;
+}
+#login_left {
+    width: 60%;
+    float: left;
+    /*border: 1px solid red;*/
+    height: 720px;
+}
+#login_left img{
+    padding-top: 15%;
+    padding-left: 15%;
+}
+#login_right {
+    float: left;
+    width: 35%;
+    /*border: 1px solid red;*/
+    height: 720px;
+}
+#footer-div{
+    margin-left:35%;
+    position:fixed;
+    bottom:0;
+}
+#login_div{
+    margin-top: 40%;
+    width: 306px;
+    /*position: absolute;*/
+}
+#login_div .login_title{
+    text-align: center;
+}
+#login_div .login_title label{
+    font-size: 18px;
+    font-weight:bold;
+    color: #535353;
+    font-family: "Helvetica Neue", Helvetica, Arial, '微软雅黑', 'Microsoft YaHei', sans-serif;
+}
+#myTabContent{
+    margin-top: 15px;
+    background-color: #FFFFFF;
+    height: 267px;
+    border: 1px solid #d8d9d4;
+    border-radius:4px;
+
+}
+#myTabContent label{
+    font-size:12px;
+    font-weight: normal;
+    color: #777777;
+}

@@ -1,0 +1,41 @@
+<extend name="Base:layout_frame"/>
+
+<block name="content">
+
+    <div class="frame-first-div">
+            <div class="col-md-2">
+                <div id="myTabContent" class="tab-content">
+                    <div class="tab-pane active in" id="home">
+                        <form id="formId" method="post" name='formId' action='{:U("Home/Config/add")}'>
+                            <input type="hidden" name="tableName" value="<?=$tableName?>"/>
+                            <input type="hidden" name="name" value="1"/>
+                            <div class="form-group">
+                                <label>名称</label>
+                                <input type="text" name="name" value="" class="form-control">
+
+                            </div>
+                            <div class="form-group">
+                                <label>关键字</label>
+                                <input type="text" name="val" value="" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label>版本号</label>
+                                <input type="text" name="code" value="" class="form-control">
+
+                            </div>
+                            <div class="form-group">
+                                <label>路径</label>
+                                <input type="text" name="path" value="" class="form-control">
+
+                            </div>
+
+                        </form>
+                    </div>
+
+
+                </div>
+                <br>
+                <button class="ok-btn center-block" onclick="fromSubmit('formId','<?=$tableName?>Tab')"></button>
+        </div>
+    </div>
+</block>

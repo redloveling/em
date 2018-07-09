@@ -1,0 +1,45 @@
+<extend name="Base:layout_frame"/>
+
+<block name="content">
+
+    <div class="frame-first-div">
+            <div class="col-md-2">
+                <div id="myTabContent" class="tab-content">
+                    <div class="tab-pane active in" id="home">
+                        <form id="formId" method="post" name='formId' action='{:U("Home/Config/add")}'>
+                            <input type="hidden" name="tableName" value="<?=$tableName?>"/>
+                            <input type="hidden" name="name" value="1"/>
+                            <div class="form-group">
+                                <label>名称</label>
+                                <input type="text" name="name" value="" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label>公司账号</label>
+                                <input type="text" name="username" value="" class="form-control" placeholder="一经注册，不能更改">
+                            </div>
+                            <div class="form-group">
+                                <label>密码</label>
+                                <input type="password" name="password" value="" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label>状态</label>
+                                <span class="form-control">
+                                <label style="width: 100px"><input type="radio" name="status" value="1" checked/>正常</label>
+                                <label><input type="radio" name="status" value="0"/>禁用</label>
+                                </span>
+                            </div>
+
+                            <div class="form-group">
+                                <label>描述</label>
+                                <textarea name="description"  rows="3" class="form-control"></textarea>
+                            </div>
+                        </form>
+                    </div>
+
+
+                </div>
+                <br>
+                <button class="ok-btn center-block" onclick="fromSubmit('formId','<?=$tableName?>Tab')"></button>
+        </div>
+    </div>
+</block>

@@ -1,0 +1,6 @@
+[ 2017-02-10T15:20:44+08:00 ] ::1 /index.php/Banner/deleteBanner/
+00001: 2017-02-10 15:20 用户 [1] 1 删除 成功 ==>DELETE FROM `em_banner` WHERE `status` = 0 || URL=/index.php/Banner/deleteBanner/
+[ 2017-02-10T15:22:17+08:00 ] ::1 /index.php/Banner/deleteBanner/
+00001: 2017-02-10 15:22 用户 [1] 1 删除 成功 ==>DELETE FROM `em_banner` WHERE `status` = -1 || URL=/index.php/Banner/deleteBanner/
+[ 2017-02-10T15:22:21+08:00 ] ::1 /index.php/Banner/deleteBanner/
+00001: 2017-02-10 15:22 用户 [1] 1 删除 成功 ==>DELETE FROM `em_banner` WHERE `status` = -1 || URL=/index.php/Banner/deleteBanner/

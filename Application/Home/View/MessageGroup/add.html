@@ -1,0 +1,57 @@
+<extend name="Base:layout_frame"/>
+<block name="js">
+    <script type="application/javascript" src="__PUBLIC__/js/Home/messagegroup/add.js"></script>
+</block>
+<block name="content">
+
+    <div class="">
+        <div class="col-md-2">
+            <div id="myTabContent" class="tab-content">
+                <div class="tab-pane active in" id="home">
+                    <form id="formId" method="post" name='formId' action='{:U("Home/MessageGroup/add")}'>
+                        <br/>
+                        <input type="hidden" id="task-user-input" name="task-user-input" value="1"/>
+                        <input type="hidden" id="template-input" name="template-input" value="1"/>
+                        <input type="hidden" id="userList" name="userList" value=""/>
+                        <input type="button" class="layui-btn msg-input" value="选择任务" style="width:200px; "
+                               onclick="$('#task-user-input').val(1);$('#template-input').val(1);changeMsgDiv(this,'task-msg');$('#templateArr').show();$('#templateBrr').hide()"/>
+                        <input type="button" class="layui-btn msg-input" value="选择人员"
+                               style="width:200px;background-color:grey"
+                               onclick="$('#task-user-input').val(2);$('#template-input').val(2);changeMsgDiv(this,'user-msg');$('#templateArr').hide();$('#templateBrr').show()"/>
+                        <br/>
+                        <div id="task-msg" class="msg-div">
+                            {:W('task/taskChoose')}
+                        </div>
+                        <div id="user-msg" class="msg-div" style="display: none">
+                            {:W('user/userCategoryChoose')}
+                        </div>
+                        <div class="form-group " id="templateArr">
+                            {:W('config/messageTemplateSelect')}
+                        </div>
+                        <div id="templateBrr" class="" style="display: none">
+                            {:W('config/messageTemplateSelect',array(1))}
+                        </div>
+                        <div class="form-group">
+                            <div class="form-group">
+                            <img src="__PUBLIC__/images/common/img_point1.png"/><label>发送方式</label>
+                                &nbsp;&nbsp;
+                            <label><input type="checkbox" name="sendWay[]" value="1" checked/>站内信</label>&nbsp;&nbsp;&nbsp;
+                            <label><input type="checkbox" name="sendWay[]" value="2"/>短信</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+
+            </div>
+            <input type="hidden" id="callBackFun" value="beforeSubmit"/>
+            <div style="margin-top:30px;width:100%;border-bottom:#c7c7c7 1px dashed;"></div>
+            <br>
+            <div class="form-inline">
+                <button class="ok-btn" onclick="fromSubmitMsg('formId','mytab',beforeSubmit)"></button>
+                <button class="cancel-btn " onclick="closeLayer()"></button>
+
+            </div>
+        </div>
+    </div>
+</block>

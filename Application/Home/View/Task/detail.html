@@ -1,0 +1,136 @@
+<extend name="Base:layout_frame"/>
+
+<block name="js">
+    <script src="__PUBLIC__/extend/ckeditor/ckeditor.js"></script>
+
+</block>
+<block name="css">
+    <link href="__PUBLIC__/css/Home/task/add.css" rel='stylesheet' type='text/css'/>
+</block>
+<block name="content">
+
+    <form id="formId" method="post" name='formId' action='{:U("Home/Task/add")}'>
+        <div class="table-div">
+            <div class="table-div-title">
+                <img src="__PUBLIC__/images/common/img_point1.png"/> <font>任务基本信息</font>
+            </div>
+            <div class="table-div-content">
+                <div class="form-inline">
+                    <label class="left" >任务/职位标题:</label>
+                    <input readonly style="width: 395px" type="text" name="title" class="form-control"  placeholder="" value="<?=$vo['title']?>">
+                    <label class="right" >*最多输入25个汉字</label>
+                </div>
+                <div class="form-inline">
+                    <label class="left task-difficult-label" >任务难度等级:</label>
+                    <?php $taskType=C('task_type');foreach($taskType as $value){?>
+                    <label class="task-difficult diff-<?=$value['name']?> <?php if($value['id']==$vo['task_type']){echo 'task-difficult-active';$taskTypeD=$value['id'];}?>" data-value="<?=$value['id']?>"><?=$value['name']?></label>
+                    <?php }?>
+                    <input type="hidden" id="task_type" name="task_type" value="<?=$vo['task_type']?>">
+                    <label class="right" style="margin-left: -15px">*1~5,5个难度等级，5级最难</label>
+                </div>
+                <div class="form-inline">
+                    <label class="left task-difficult-label" >招聘人数:</label>
+                    <input readonly name="person_num" style="width: 120px;" type="text" value="<?=$vo['person_num']?>" class="form-control input-no-right">
+                    <label class="input-right" >人</label>
+                    <?php $person_type=C('person_type');foreach($person_type as $key=>$value){?>
+                    <label class="sex-limit <?php if($value['id']==$vo['person_type']){echo 'sex-limit-active';$personTypeD=$value['id'];}?>" style="<?php if($key==0){echo 'margin-left:18px';}?>" data-value="<?=$value['id']?>"><?=$value['name']?></label>
+                    <?php }?>
+                    <input type="hidden" id="person_type" name="person_type" value="<?=$vo['person_type']?>">
+
+                </div>
+                <div class="form-inline">
+                    <label class="left" >报名截止时间:</label>
+                    <input readonly type="text" class="Wdate form-control" name="deadline" value="<?php if($vo['deadline']){echo date('Y-m-d H:i');}else{echo date('Y-m-d H:i');}?>" style="height: 30px;width: 150px" onFocus="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm'})"/>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="table-div">
+            <div class="table-div-title">
+                <img src="__PUBLIC__/images/common/img_point1.png"/> <font>工资结算</font>
+            </div>
+            <div class="table-div-content">
+                <div class="form-inline">
+                    <label class="left task-difficult-label" >工资:</label>
+                    <input  readonly name="wages"style="width: 120px;" type="text" value="<?=$vo['wages']?>" class="form-control input-no-right">
+                    <label  class="input-right" >元</label>
+                    <?php $wages = C('wages');?>
+                    <?php foreach($wages as $key=>$value){?>
+                    <label class="wage-list <?php if($value['id']==$vo['wages_type']){ echo 'wage-list-active';$wagesTypeD=$value['id'];}?>" style="<?php if($key==1){echo 'margin-left:18px';}?>" data-value="<?=$value['id']?>"><?=$value['name']?></label>
+                    <?php }?>
+                    <input type="hidden" id="wages_type" name="wages_type" value="<?=$vo['wages_type']?>">
+
+                </div>
+                <div class="form-inline">
+                    <label class="left" >结算方式:</label>
+                    {:W('Config/select',array('tb_settlement','settlement_type',$vo['settlement_type']))}
+                </div>
+            </div>
+        </div>
+        <div class="table-div">
+            <div class="table-div-title">
+                <img src="__PUBLIC__/images/common/img_point1.png"/> <font>工作描述</font>
+            </div>
+            <div class="table-div-content">
+                <div class="form-inline">
+                    <label class="left" >工作时间描述:</label>
+                    <input readonly style="width: 395px" type="text" name="work_time_description" value="<?=$vo['work_time_description']?>" class="form-control"  placeholder="">
+                    <label class="right" >*最多输入50个字符</label>
+                </div>
+                <div class="form-inline">
+                    <label class="left" >工作时间:</label>
+                    <input readonly type="text" class="Wdate form-control" name="start_time" value="<?php if($vo['start_time']){echo date('Y-m-d H:i',$vo['start_time']);}else{echo date('Y-m-d H:i');}?>" style="height: 34px;width: 155px" onFocus="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm'})"/>
+                    --
+                    <input readonly type="text" class="Wdate form-control" name="end_time" value="<?php if($vo['deadline']){echo date('Y-m-d H:i',$vo['end_time']);}else{echo date('Y-m-d H:i');}?>" style="height: 34px;width: 155px" onFocus="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm'})"/>
+                </div>
+
+                {:W('Map/index',array($vo['work_area'],$vo['work_area_detail']))}
+                <div class="form-inline">
+                    <label class="left" >地点描述:</label>
+                    <input readonly style="width: 395px" type="text" name="place_description" value="<?=$vo['place_description']?>" class="form-control"  placeholder="">
+                    <label class="right" ><img style="cursor: pointer" src="__PUBLIC__/images/task/ic_gps.png"></label>
+                </div>
+                <div class="form-inline">
+                    <label class="left" style="vertical-align:top;">岗位描述:</label>
+                    <label>
+                     <textarea readonly name="editor1" id="editor1" rows="10" cols="80">
+                         <?=$vo['work_description']?>
+                    </textarea>
+                    </label>
+                    <script>
+                        // Replace the <textarea id="editor1"> with a CKEditor
+                        // instance, using default configuration.
+                        CKEDITOR.replace('editor1', {
+                            skin : 'kama',   //'kama', 'v2', 'office2003'
+                            height : 200,
+                            width : 600
+                        });
+                    </script>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-div">
+            <div class="table-div-title">
+                <img src="__PUBLIC__/images/common/img_point1.png"/> <font>联系方式</font>
+            </div>
+            <div class="table-div-content">
+                <div class="form-inline">
+                    <label class="left" >联系人:</label>
+                    <input readonly name="contact" type="text" value="<?=$vo['contact']?>" class="form-control">
+                    <label class="right" >*最多输入25个字符</label>
+                </div>
+                <div class="form-inline">
+                    <label class="left" >联系电话:</label>
+                    <input readonly name="contact_tell" type="text"  value="<?=$vo['contact_tell']?>" class="form-control">
+                </div>
+                <div class="form-inline">
+                    <label class="left" >咨询QQ:</label>
+                    <input readonly name="qq" type="text" value="<?=$vo['qq']?>"  class="form-control">
+                </div>
+            </div>
+        </div>
+
+    </form>
+</block>

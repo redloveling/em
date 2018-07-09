@@ -1,0 +1,54 @@
+.left-div .logo-img{
+    margin-top: 10%;
+    margin-left: 18%;
+}
+.left-div-ul{
+    margin-top: 30px;
+}
+
+.left-div-ul ul{
+    border-top: 2px dashed #39475c;
+    margin-left: 10%;
+}
+.left-div-ul ul li{
+    height: 50px;
+    cursor: pointer;
+}
+.left-div-ul ul li a{
+    font-size: 14px;
+    font-family: "Helvetica Neue", Helvetica, Arial, '微软雅黑', 'Microsoft YaHei', sans-serif;
+    font-weight: bold;
+    color: #9fa7af;
+    line-height: 50px;
+}
+.left-div-ul .first-li a{
+    margin-top: 20px;
+    font-size: 12px;
+    font-family: "Helvetica Neue", Helvetica, Arial, '微软雅黑', 'Microsoft YaHei', sans-serif;
+    color: #9fa7af;
+    font-weight: normal;
+}
+
+.right-top-div{
+    padding-top: 20px;
+}
+.right-top-div span{
+    margin-left: 30px;
+    font-size: 16px;
+    color: #1cb4ec;
+    font-weight: bold;
+}
+.right-top-div a{
+    margin-right: 30px;
+    font-size: 16px;
+    color: #999999;
+}
+.label-danger{
+    border-radius: 5px;
+}
+.left-div-ul .active{
+    border-left: 4px solid #1cb4ec;
+    background-color: #344256;
+    margin-left: -20px;
+    padding-left: 16px;
+}

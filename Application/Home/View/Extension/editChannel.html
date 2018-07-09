@@ -1,0 +1,44 @@
+<extend name="Base:layout_frame"/>
+
+<block name="content">
+
+    <div class="">
+            <div class="col-md-2">
+                <div id="myTabContent" class="tab-content">
+                    <div class="tab-pane active in" id="home">
+                        <form id="formId" method="post" name='formId' action='{:U("Home/Extension/editChannel")}'>
+                            <input type="hidden" name="cId" value="<?=$vo['id']?>"/>
+                            <div class="form-group" style="margin-top:15px;">
+                                <label>渠道商名称</label>
+                                <input type="text" name="name" value="<?=$vo['name']?>"  class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label>渠道账号</label>
+                                <input type="text" name="username" value="<?=$vo['username']?>" readonly="true" class="form-control" placeholder="一经注册，不能更改">
+                            </div>
+                            <div class="form-group">
+								<input type="checkbox" onclick="var p = $('#password');if(p.is(':hidden')){p.show();}else{p.hide()}"  name ="isModify" value="1"  id="isModify"  class="checkboxstyle" /><label class="checklabelstyle" for="isModify" style="float: left; margin-right:10px; margin-top:2px; margin-bottom:10px;"></label>修改密码
+                                <input type="password" name="password" value="" id="password" class="form-control" style="display: none">
+                            </div>
+                            <div class="form-group">
+                                <label>手机号码</label>
+                                <input type="text" name="tell" value="<?=$vo['tell']?>" class="form-control" >
+                            </div>
+                            <div class="form-group">
+                                <label>状态</label>
+                                <span class="form-control">
+                                <label style="width: 100px"><input type="radio" name="status" value="1" <?php if($vo['status']==1){echo 'checked="true"';}?>/>正常</label>
+                                <label><input type="radio" name="status" value="0" <?php if($nodeInfo['status']==0){echo 'checked="true"';}?>/>禁用</label>
+                                </span>
+                            </div>
+
+                        </form>
+                    </div>
+
+
+                </div>
+
+                <button class="ok-btn center-block" onclick="fromSubmit('formId','channelTab')"></button>
+        </div>
+    </div>
+</block>

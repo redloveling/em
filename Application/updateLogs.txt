@@ -1,0 +1,22 @@
+[ 2016-12-21T11:24:07+08:00 ] 192.168.1.220 /index.php/Api/OpenApi/index
+00001: 2016-12-21 11:24 用户 [] 0 更新 成功 ==>UPDATE `em_user` SET `true_name`='霸道',`card_num`='513902199312122365',`real_status`='1',`card_num_positive`='2016-12-21/5859f5d7d3099.png,2016-12-21/5859f5d7d3481.png,' WHERE `id` = 14 || URL=/index.php/Api/OpenApi/index
+[ 2016-12-21T11:26:10+08:00 ] 192.168.1.220 /index.php/Api/OpenApi/index
+00001: 2016-12-21 11:26 用户 [] 0 更新 成功 ==>UPDATE `em_user` SET `true_name`='霸道',`card_num`='513902199312122365',`real_status`='1',`card_num_positive`='2016-12-21/5859f652b7f1d.png,2016-12-21/5859f652b86ee.png,' WHERE `id` = 14 || URL=/index.php/Api/OpenApi/index
+[ 2016-12-21T11:47:49+08:00 ] 192.168.1.220 /index.php/Api/OpenApi/index
+00001: 2016-12-21 11:47 用户 [] 0 更新 成功 ==>INSERT INTO `em_attachment` (`file_name`,`file_key`,`type`,`file_location`,`file_type`,`file_size`,`add_time`,`create_uid`) VALUES ('negativie','negativie.png','2','2016-12-21/5859fb65857a4.png,','image/png','27493','1482292069','14') || URL=/index.php/Api/OpenApi/index
+[ 2016-12-21T11:47:49+08:00 ] 192.168.1.220 /index.php/Api/OpenApi/index
+00001: 2016-12-21 11:47 用户 [] 0 更新 成功 ==>INSERT INTO `em_attachment` (`file_name`,`file_key`,`type`,`file_location`,`file_type`,`file_size`,`add_time`,`create_uid`) VALUES ('positive','positive.png','2','2016-12-21/5859fb6585f74.png,','image/png','30832','1482292069','14') || URL=/index.php/Api/OpenApi/index
+[ 2016-12-21T11:47:49+08:00 ] 192.168.1.220 /index.php/Api/OpenApi/index
+00001: 2016-12-21 11:47 用户 [] 0 更新 成功 ==>UPDATE `em_user` SET `true_name`='霸道',`card_num`='513902199312122365',`real_status`='1' WHERE `id` = 14 || URL=/index.php/Api/OpenApi/index
+[ 2016-12-21T11:48:57+08:00 ] 192.168.1.220 /index.php/Api/OpenApi/index
+00001: 2016-12-21 11:48 用户 [] 0 更新 成功 ==>INSERT INTO `em_attachment` (`file_name`,`file_key`,`type`,`file_location`,`file_type`,`file_size`,`add_time`,`create_uid`) VALUES ('negativie','negativie.png','2','2016-12-21/5859fba94a1f0.png,','image/png','27493','1482292137','14') || URL=/index.php/Api/OpenApi/index
+[ 2016-12-21T11:48:57+08:00 ] 192.168.1.220 /index.php/Api/OpenApi/index
+00001: 2016-12-21 11:48 用户 [] 0 更新 成功 ==>INSERT INTO `em_attachment` (`file_name`,`file_key`,`type`,`file_location`,`file_type`,`file_size`,`add_time`,`create_uid`) VALUES ('positive','positive.png','2','2016-12-21/5859fba94a9c0.png,','image/png','30832','1482292137','14') || URL=/index.php/Api/OpenApi/index
+[ 2016-12-21T11:48:57+08:00 ] 192.168.1.220 /index.php/Api/OpenApi/index
+00001: 2016-12-21 11:48 用户 [] 0 更新 成功 ==>UPDATE `em_user` SET `true_name`='霸道',`card_num`='513902199312122365',`real_status`='1',`card_num_positive`=NULL WHERE `id` = 14 || URL=/index.php/Api/OpenApi/index
+[ 2016-12-21T11:49:47+08:00 ] 192.168.1.220 /index.php/Api/OpenApi/index
+00001: 2016-12-21 11:49 用户 [] 0 更新 成功 ==>INSERT INTO `em_attachment` (`file_name`,`file_key`,`type`,`file_location`,`file_type`,`file_size`,`add_time`,`create_uid`) VALUES ('negativie','negativie.png','2','2016-12-21/5859fbdbc8121.png,','image/png','27493','1482292187','14') || URL=/index.php/Api/OpenApi/index
+[ 2016-12-21T11:49:47+08:00 ] 192.168.1.220 /index.php/Api/OpenApi/index
+00001: 2016-12-21 11:49 用户 [] 0 更新 成功 ==>INSERT INTO `em_attachment` (`file_name`,`file_key`,`type`,`file_location`,`file_type`,`file_size`,`add_time`,`create_uid`) VALUES ('positive','positive.png','2','2016-12-21/5859fbdbc88f1.png,','image/png','30832','1482292187','14') || URL=/index.php/Api/OpenApi/index
+[ 2016-12-21T11:49:47+08:00 ] 192.168.1.220 /index.php/Api/OpenApi/index
+00001: 2016-12-21 11:49 用户 [] 0 更新 成功 ==>UPDATE `em_user` SET `true_name`='霸道',`card_num`='513902199312122365',`real_status`='1',`card_num_positive`=NULL WHERE `id` = 14 || URL=/index.php/Api/OpenApi/index

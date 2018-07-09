@@ -1,0 +1,65 @@
+<extend name="Base:layout"/>
+
+<block name="js">
+    <script src="__PUBLIC__/js/home/user/index.js" type="text/javascript"></script>
+</block>
+<block name="css">
+    <link href="__PUBLIC__/css/Home/task/index.css" rel='stylesheet' type='text/css'/>
+
+</block>
+
+<block name="content">
+    <div class="title-span">
+        <div>用户管理>用户列表</div>
+    </div>
+    <?php foreach($userTabList as $key=>$value){ $tableNames .= $value['id'].','?>
+    <div  class="task-title-div tab-div" id="task-title-id-<?=$value['id']?>" onclick="activeThis(this);changeTabDiv('tab-div-pan-<?=$value['id']?>')">
+        <div class="status-title status <?php if($value['checked']==1){ echo 'active';}?>"><font><?=$value['name']?></font></div>
+        <div class="lab">
+            <img src="__PUBLIC__/images/user/<?=$value['img']?>">
+            <span id="count_user_<?=$value['id']?>"></span><font>人</font>
+        </div>
+    </div>
+    <?php }?>
+    <input type="hidden" name="tableNames" id="tableNames" value="<?=rtrim($tableNames,',')?>"/>
+
+    <div class="table-list">
+        <div class="main-content ">
+            <?php foreach($userTabList as $key=>$value){?>
+            <div class="tab-div-pan <?php if($value['checked']==1){ echo 'active-pan';}?>" id="tab-div-pan-<?=$value['id']?>"  >
+                <div class="form-inline" id="button-<?=$value['id']?>">
+                    <select data-width="150" class="selectpicker form-inline" name="" id="join_status_<?=$value['id']?>" class="form-control">
+                        <option value="1,2">全部名单</option>
+                        <option value="1">未参加过任务</option>
+                    </select>
+                    &nbsp;&nbsp;<label>注册时间:</label>
+                    <input type="text" class="Wdate form-control" id="start_time_<?=$value['id']?>" name="start_time" value="" style="height: 32px;width: 155px;display: inline-flex" onFocus="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm'})"/>
+                    --<input type="text" class="Wdate form-control" id="end_time_<?=$value['id']?>" name="start_time" value="" style="height: 32px;width: 155px;display: inline-flex" onFocus="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm'})"/>
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                    <select data-width="150"name="" class="selectpicker form-inline" id="selectList_<?=$value['id']?>" class="form-control">
+                        <option value="username">姓名</option>
+                        <option value="card_num">身份证号</option>
+                        <option value="age">年龄</option>
+                        <option value="sex">性别</option>
+                        <option value="education">学历</option>
+                    </select>
+                    &nbsp;&nbsp;
+                    <input type="text" name="keyWord" id="keyWord_<?=$value['id']?>" class="form-control"  value="" placeholder="输入关键字词查询" style="width: auto">
+
+                    <input class="ic-query" type="button" onclick="tableRefresh('<?=$value['id']?>')"/>
+                    <input class="ic-reset" type="button" onclick="resetButton('<?=$value['id']?>')"/>
+                </div>
+
+
+                <div id="task-list-new-<?=$value['id']?>" class="form-inline">
+                    <span class="span-title"><?=$value['name']?>列表</span>
+                    <button class="common-button" onclick="exportUser('<?=$value['id']?>')">&nbsp;<img src="__PUBLIC__/images/common/ic_download.png">&nbsp;&nbsp;&nbsp;导出用户名单</button>
+                </div>
+                <table id="<?=$value['id'].'Tab'?>" data-toggle="table">
+
+                </table>
+            </div>
+            <?php }?>
+        </div>
+    </div>
+</block>

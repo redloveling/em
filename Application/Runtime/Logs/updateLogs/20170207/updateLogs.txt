@@ -1,0 +1,58 @@
+[ 2017-02-07T10:22:36+08:00 ] ::1 /index.php/AdminRole/addUser/
+00001: 2017-02-07 10:22 用户 [1] 1 更新 成功 ==>INSERT INTO `em_admin_user_role` (`business_id`,`role_id`,`user_id`,`create_time`,`create_uid`) VALUES ('0','1','15','1486434156','1') || URL=/index.php/AdminRole/addUser/
+[ 2017-02-07T11:30:51+08:00 ] ::1 /index.php/Question/edit.html
+00001: 2017-02-07 11:30 用户 [1] 1 更新 成功 ==>UPDATE `em_question` SET `type`='1',`title`='三鸡细不细傻傻的？',`content`='a:4:{i:1;s:9:\"有可能\";i:2;s:6:\"可能\";i:3;s:6:\"是的\";i:4;s:24:\"谁说不是我跟他急\";}',`answer`='a:4:{i:1;i:1;i:2;i:1;i:3;i:1;i:4;i:1;}',`modify_time`='1486438251' WHERE `id` = 2 || URL=/index.php/Question/edit.html
+[ 2017-02-07T11:31:02+08:00 ] ::1 /index.php/Question/edit.html
+00001: 2017-02-07 11:31 用户 [1] 1 更新 成功 ==>UPDATE `em_question` SET `type`='2',`title`='三鸡细不细傻傻的？',`content`='a:4:{i:1;s:9:\"有可能\";i:2;s:6:\"可能\";i:3;s:6:\"是的\";i:4;s:24:\"谁说不是我跟他急\";}',`answer`='a:1:{i:2;i:1;}',`modify_time`='1486438262' WHERE `id` = 2 || URL=/index.php/Question/edit.html
+[ 2017-02-07T11:31:58+08:00 ] ::1 /index.php/Question/edit.html
+00001: 2017-02-07 11:31 用户 [1] 1 更新 成功 ==>UPDATE `em_question` SET `type`='2',`title`='你细不细傻',`content`='a:3:{i:1;s:6:\"是的\";i:2;s:12:\"妥妥的呀\";i:3;s:6:\"不是\";}',`answer`='a:1:{i:3;i:1;}',`modify_time`='1486438317' WHERE `id` = 1 || URL=/index.php/Question/edit.html
+[ 2017-02-07T11:32:10+08:00 ] ::1 /index.php/Question/edit.html
+00001: 2017-02-07 11:32 用户 [1] 1 更新 成功 ==>UPDATE `em_question` SET `type`='1',`title`='你细不细傻',`content`='a:3:{i:1;s:6:\"是的\";i:2;s:12:\"妥妥的呀\";i:3;s:6:\"不是\";}',`answer`='a:2:{i:1;i:1;i:2;i:1;}',`modify_time`='1486438330' WHERE `id` = 1 || URL=/index.php/Question/edit.html
+[ 2017-02-07T11:35:39+08:00 ] ::1 /index.php/Question/edit.html
+00001: 2017-02-07 11:35 用户 [1] 1 更新 成功 ==>UPDATE `em_question` SET `type`='1',`title`='你细不细傻',`content`='a:3:{i:1;s:6:\"是的\";i:2;s:12:\"妥妥的呀\";i:3;s:6:\"不是\";}',`answer`='a:2:{i:1;i:1;i:2;i:1;}',`modify_time`='1486438539' WHERE `id` = 1 || URL=/index.php/Question/edit.html
+[ 2017-02-07T11:43:25+08:00 ] ::1 /index.php/Node/handleData/
+00001: 2017-02-07 11:43 用户 [1] 1 更新 成功 ==>UPDATE `em_admin_node` SET `status`='0' WHERE `id` IN ('1','3','4','18','19','20','21','22','2','5','7','8','9','14','15','16','17','23','24') || URL=/index.php/Node/handleData/
+[ 2017-02-07T11:43:30+08:00 ] ::1 /index.php/Node/handleData/
+00001: 2017-02-07 11:43 用户 [1] 1 更新 成功 ==>UPDATE `em_admin_node` SET `status`='1' WHERE `id` IN ('1','3','4','18','19','20','21','22','2','5','7','8','9','14','15','16','17','23','24') || URL=/index.php/Node/handleData/
+[ 2017-02-07T11:50:58+08:00 ] ::1 /index.php/Question/edit.html
+00001: 2017-02-07 11:50 用户 [1] 1 更新 成功 ==>UPDATE `em_question` SET `type`='2',`title`='22',`content`='a:4:{i:1;s:1:\"2\";i:2;s:3:\"222\";i:3;s:4:\"4444\";i:4;s:2:\"33\";}',`answer`='a:2:{i:1;i:1;i:2;i:1;}',`modify_time`='1486439458' WHERE `id` = 9 || URL=/index.php/Question/edit.html
+[ 2017-02-07T11:51:09+08:00 ] ::1 /index.php/Question/edit.html
+00001: 2017-02-07 11:51 用户 [1] 1 更新 成功 ==>UPDATE `em_question` SET `type`='2',`title`='22',`content`='a:4:{i:1;s:1:\"2\";i:2;s:3:\"222\";i:3;s:4:\"4444\";i:4;s:2:\"33\";}',`answer`='a:1:{i:2;i:1;}',`modify_time`='1486439469' WHERE `id` = 9 || URL=/index.php/Question/edit.html
+[ 2017-02-07T11:54:32+08:00 ] ::1 /index.php/AdminRole/addUser/
+00001: 2017-02-07 11:54 用户 [1] 1 更新 成功 ==>INSERT INTO `em_admin_user_role` (`business_id`,`role_id`,`user_id`,`create_time`,`create_uid`) VALUES ('0','1','15','1486439672','1') || URL=/index.php/AdminRole/addUser/
+[ 2017-02-07T11:54:32+08:00 ] ::1 /index.php/AdminRole/addUser/
+00001: 2017-02-07 11:54 用户 [1] 1 更新 成功 ==>INSERT INTO `em_admin_user_role` (`business_id`,`role_id`,`user_id`,`create_time`,`create_uid`) VALUES ('0','1','16','1486439672','1') || URL=/index.php/AdminRole/addUser/
+[ 2017-02-07T11:54:32+08:00 ] ::1 /index.php/AdminRole/addUser/
+00001: 2017-02-07 11:54 用户 [1] 1 更新 成功 ==>INSERT INTO `em_admin_user_role` (`business_id`,`role_id`,`user_id`,`create_time`,`create_uid`) VALUES ('0','1','17','1486439672','1') || URL=/index.php/AdminRole/addUser/
+[ 2017-02-07T13:51:48+08:00 ] ::1 /index.php/Question/edit.html
+00001: 2017-02-07 13:51 用户 [1] 1 更新 成功 ==>UPDATE `em_question` SET `type`='1',`title`='你细不细傻',`content`='a:3:{i:1;s:6:\"是的\";i:2;s:12:\"妥妥的呀\";i:3;s:6:\"不是\";}',`answer`='a:2:{i:2;i:1;i:3;i:1;}',`modify_time`='1486446708' WHERE `id` = 1 || URL=/index.php/Question/edit.html
+[ 2017-02-07T13:52:06+08:00 ] ::1 /index.php/Question/edit.html
+00001: 2017-02-07 13:52 用户 [1] 1 更新 成功 ==>UPDATE `em_question` SET `type`='1',`title`='你细不细傻',`content`='a:3:{i:1;s:6:\"是的\";i:2;s:12:\"妥妥的呀\";i:3;s:6:\"不是\";}',`answer`='a:2:{i:1;i:1;i:3;i:1;}',`modify_time`='1486446726' WHERE `id` = 1 || URL=/index.php/Question/edit.html
+[ 2017-02-07T13:52:16+08:00 ] ::1 /index.php/Question/edit.html
+00001: 2017-02-07 13:52 用户 [1] 1 更新 成功 ==>UPDATE `em_question` SET `type`='1',`title`='你细不细傻',`content`='a:3:{i:1;s:6:\"是的\";i:2;s:12:\"妥妥的呀\";i:3;s:6:\"不是\";}',`answer`='a:2:{i:1;i:1;i:2;i:1;}',`modify_time`='1486446736' WHERE `id` = 1 || URL=/index.php/Question/edit.html
+[ 2017-02-07T13:54:59+08:00 ] ::1 /index.php/Question/edit.html
+00001: 2017-02-07 13:54 用户 [1] 1 更新 成功 ==>UPDATE `em_question` SET `type`='1',`title`='你细不细傻',`content`='a:3:{i:1;s:6:\"是的\";i:2;s:12:\"妥妥的呀\";i:3;s:6:\"不是\";}',`answer`='a:2:{i:1;i:1;i:2;i:1;}',`modify_time`='1486446899' WHERE `id` = 1 || URL=/index.php/Question/edit.html
+[ 2017-02-07T13:55:15+08:00 ] ::1 /index.php/Question/edit.html
+00001: 2017-02-07 13:55 用户 [1] 1 更新 成功 ==>UPDATE `em_question` SET `type`='0',`title`='三鸡细不细傻傻的？',`content`='a:1:{i:0;s:9:\"有可能\";}',`answer`='a:1:{i:0;s:9:\"有可能\";}',`modify_time`='1486446915' WHERE `id` = 2 || URL=/index.php/Question/edit.html
+[ 2017-02-07T13:56:10+08:00 ] ::1 /index.php/Question/edit.html
+00001: 2017-02-07 13:56 用户 [1] 1 更新 成功 ==>UPDATE `em_question` SET `type`='2',`title`='22',`content`='a:4:{i:1;s:1:\"2\";i:2;s:3:\"222\";i:3;s:4:\"4444\";i:4;s:2:\"33\";}',`answer`='a:1:{i:3;i:1;}',`modify_time`='1486446970' WHERE `id` = 9 || URL=/index.php/Question/edit.html
+[ 2017-02-07T14:06:35+08:00 ] ::1 /index.php/Question/add.html
+00001: 2017-02-07 14:06 用户 [1] 1 更新 成功 ==>INSERT INTO `em_question` (`type`,`title`,`content`,`answer`,`create_time`,`create_uid`) VALUES ('0','aaa','a:1:{i:0;s:3:\"111\";}','a:1:{i:0;s:3:\"111\";}','1486447595','1') || URL=/index.php/Question/add.html
+[ 2017-02-07T14:17:20+08:00 ] ::1 /index.php/Question/add.html
+00001: 2017-02-07 14:17 用户 [1] 1 更新 成功 ==>INSERT INTO `em_question` (`type`,`title`,`content`,`answer`,`create_time`,`create_uid`) VALUES ('2','aaaa','a:4:{i:1;s:3:\"111\";i:2;s:3:\"222\";i:3;s:3:\"333\";i:4;s:3:\"444\";}','a:1:{i:1;i:1;}','1486448240','1') || URL=/index.php/Question/add.html
+[ 2017-02-07T14:17:43+08:00 ] ::1 /index.php/Question/edit.html
+00001: 2017-02-07 14:17 用户 [1] 1 更新 成功 ==>UPDATE `em_question` SET `type`='2',`title`='aaaa',`content`='a:6:{i:1;s:3:\"111\";i:2;s:3:\"222\";i:3;s:3:\"333\";i:4;s:3:\"444\";i:5;s:3:\"555\";i:6;s:3:\"666\";}',`answer`='a:1:{i:6;i:1;}',`modify_time`='1486448263' WHERE `id` = 11 || URL=/index.php/Question/edit.html
+[ 2017-02-07T14:17:51+08:00 ] ::1 /index.php/Question/edit.html
+00001: 2017-02-07 14:17 用户 [1] 1 更新 成功 ==>UPDATE `em_question` SET `type`='1',`title`='aaaa',`content`='a:6:{i:1;s:3:\"111\";i:2;s:3:\"222\";i:3;s:3:\"333\";i:4;s:3:\"444\";i:5;s:3:\"555\";i:6;s:3:\"666\";}',`answer`='a:4:{i:2;i:1;i:3;i:1;i:4;i:1;i:6;i:1;}',`modify_time`='1486448271' WHERE `id` = 11 || URL=/index.php/Question/edit.html
+[ 2017-02-07T16:07:32+08:00 ] ::1 /index.php/AdminRole/access.html
+00001: 2017-02-07 16:07 用户 [1] 1 更新 成功 ==>INSERT INTO `em_admin_role_node` (`business_id`,`role_id`,`node_id`,`create_time`,`create_uid`) VALUES ('0','1','22','1486454852','1') || URL=/index.php/AdminRole/access.html
+[ 2017-02-07T16:07:53+08:00 ] ::1 /index.php/AdminRole/access.html
+00001: 2017-02-07 16:07 用户 [1] 1 更新 成功 ==>INSERT INTO `em_admin_role_node` (`business_id`,`role_id`,`node_id`,`create_time`,`create_uid`) VALUES ('0','1','2','1486454873','1') || URL=/index.php/AdminRole/access.html
+[ 2017-02-07T16:07:53+08:00 ] ::1 /index.php/AdminRole/access.html
+00001: 2017-02-07 16:07 用户 [1] 1 更新 成功 ==>INSERT INTO `em_admin_role_node` (`business_id`,`role_id`,`node_id`,`create_time`,`create_uid`) VALUES ('0','1','7','1486454873','1') || URL=/index.php/AdminRole/access.html
+[ 2017-02-07T16:07:53+08:00 ] ::1 /index.php/AdminRole/access.html
+00001: 2017-02-07 16:07 用户 [1] 1 更新 成功 ==>INSERT INTO `em_admin_role_node` (`business_id`,`role_id`,`node_id`,`create_time`,`create_uid`) VALUES ('0','1','21','1486454873','1') || URL=/index.php/AdminRole/access.html
+[ 2017-02-07T16:07:53+08:00 ] ::1 /index.php/AdminRole/access.html
+00001: 2017-02-07 16:07 用户 [1] 1 更新 成功 ==>INSERT INTO `em_admin_role_node` (`business_id`,`role_id`,`node_id`,`create_time`,`create_uid`) VALUES ('0','1','23','1486454873','1') || URL=/index.php/AdminRole/access.html
+[ 2017-02-07T16:07:53+08:00 ] ::1 /index.php/AdminRole/access.html
+00001: 2017-02-07 16:07 用户 [1] 1 更新 成功 ==>INSERT INTO `em_admin_role_node` (`business_id`,`role_id`,`node_id`,`create_time`,`create_uid`) VALUES ('0','1','24','1486454873','1') || URL=/index.php/AdminRole/access.html

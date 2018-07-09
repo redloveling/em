@@ -1,0 +1,110 @@
+<extend name="Base:layout_frame"/>
+<block name="js">
+    <script type="application/javascript" src="__PUBLIC__/js/Home/widget/user/usertaskmoney.js"></script>
+
+</block>
+<block name="css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/Home/widget/usertaskmoney.css">
+
+</block>
+
+<block name="content">
+    <form id="formId" method="post" name='formId' action='{:U("Home/ajax/userTaskMoney")}' onsubmit="return false">
+    <input type="hidden" name="userId" value="<?=$userId?>"/>
+    <input type="hidden" name="taskId" value="<?=$taskId?>"/>
+    <div class="user-info">
+        <div class="register-info">
+            <div class="form-inline">
+                <table border="0" id="price-list">
+                    <tr>
+                        <td>单价(<?=$taskInfo['settlement']?>)</td>
+                        <td>工作量(<?=$taskInfo['wages']?>)</td>
+                        <td>小计</td>
+                    </tr>
+                    <?php foreach($vo['serialize']['price'] as $key=>$value){?>
+                    <tr>
+                        <td><input class="priceA" type="text" name="price[]" id="price_<?=$key?>" value="<?=$value?>"
+                                   onchange="calculatePrice(this,'price')"/></td>
+                        <td><input class="countA" type="text" name="count[]" id="count_<?=$key?>" value="<?=$vo['serialize']['count'][$key]?>"
+                                   onchange="calculatePrice(this,'count')"/></td>
+                        <td><input type="text" class="perPriceTotal" readonly=readonly name="total[]" value="<?=$vo['serialize']['total'][$key]?>"
+                                   id="total_<?=$key?>"/> &nbsp;元
+                        </td>
+                        <td>
+                            <?php if($key==0){?>
+                            <button onclick="addMoney()" class="layui-btn layui-btn-small">
+                                <i class="layui-icon">+</i>
+                            </button>
+                            <?php }else{?>
+                            <button onclick="delMoney(this)" class="layui-btn layui-btn-small">
+                                <i class="layui-icon">-</i>
+                            </button>
+                            <?php }?>
+                        </td>
+                    </tr>
+                    <?php }?>
+
+                </table>
+
+            </div>
+        </div>
+        <div class="id-info">
+            <div class="form-inline">
+                <table border="0">
+                    <tr>
+                        <td>奖励 &nbsp;
+                            <input style="width: 65px" type="text" id='reward' name="reward" class="form-control numberbox"
+                                   placeholder="0.00" value="<?=$vo['serialize']['reward']?>" onchange="calculatePriceTotal(this)">&nbsp;元
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>扣款 &nbsp;
+                            <input style="width: 65px" type="text" id='debit' name="debit" class="form-control numberbox"
+                                   placeholder="0.00" value="<?=$vo['serialize']['debit']?>" onchange="calculatePriceTotal(this)">&nbsp;元
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>提成 &nbsp;
+                            <input style="width: 65px" type="text" id='commission' name="commission"
+                                   class="form-control numberbox" placeholder="0.00" value="<?=$vo['serialize']['commission']?>" onchange="calculatePriceTotal(this)">&nbsp;元
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="user-info" style="clear:both; ">
+        <input id="totalMoney" value="<?=$vo['money']?>" name="totalMoney" type="hidden"/>
+        <div class="form-inline" style="margin-left: 50px">
+            <label style="color: black">工资合计</label>&nbsp;
+            <label id="totalMoneyLabel"><?=$vo['money']?$vo['money']:0?></label>元&nbsp;&nbsp;&nbsp;
+            <label>（工资=∑(单价n*工作量n)+奖励-扣款+提成）</label>
+        </div>
+        <br>
+        <div class="form-inline" style="margin-left: 50px">
+            <label style="color: black;vertical-align:top;">备注</label>
+            <label>
+                <textarea name="remark" id="remark" rows="2" cols="80"><?=$vo['remark']?>
+                </textarea>
+            </label>
+        </div>
+
+    </div>
+    <button style="margin-left: 250px" class="layui-btn" onclick="checkSubmit('formId')">保存/确认修改</button>
+    <br>
+    </form>
+    <div id="taskMoneyTemp" style="display: none">
+        <table>
+            <tr>
+                <td><input class="AAA"  type="text" name="price[]" onchange="calculatePrice(this,'price')"/></td>
+                <td><input class="BBB" type="text" name="count[]" onchange="calculatePrice(this,'count')"/></td>
+                <td><input class="perPriceTotal" readonly=readonly type="text" name="total[]"/> &nbsp;元</td>
+                <td>
+                    <button onclick="delMoney(this)" class="layui-btn layui-btn-small">
+                        <i class="layui-icon">-</i>
+                    </button>
+                </td>
+            </tr>
+        </table>
+    </div>
+</block>

@@ -1,0 +1,9 @@
+<select class="selectpicker form-inline" id="user_ids"  data-live-search="true" >
+    <option value="all">所有</option>
+    <?php if($userList){ foreach($userList as $value){?>
+        <option value="<?=$value['id']?>"><?=$value['username']?></option>
+    <?php }}?>
+</select>
+<script>
+
+</script>

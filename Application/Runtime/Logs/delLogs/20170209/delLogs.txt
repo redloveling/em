@@ -1,0 +1,4 @@
+[ 2017-02-09T14:40:50+08:00 ] ::1 /index.php/AdminRole/access.html
+00001: 2017-02-09 14:40 用户 [1] 1 删除 成功 ==>DELETE FROM `em_admin_role_node` WHERE `role_id` = 1 AND `node_id` IN ('1','2','7','8','17') || URL=/index.php/AdminRole/access.html
+[ 2017-02-09T14:41:18+08:00 ] ::1 /index.php/AdminRole/access.html
+00001: 2017-02-09 14:41 用户 [1] 1 删除 成功 ==>DELETE FROM `em_admin_role_node` WHERE `role_id` = 1 AND `node_id` IN ('') || URL=/index.php/AdminRole/access.html

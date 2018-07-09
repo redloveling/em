@@ -1,0 +1,22 @@
+[ 2017-03-02T16:18:22+08:00 ] ::1 /index.php/user/passPayAudit/
+00001: 2017-03-02 16:18 用户 [1] 1 更新 成功 ==>UPDATE `em_user` SET `pay_status`='2' WHERE `id` = 1 || URL=/index.php/user/passPayAudit/
+[ 2017-03-02T16:18:22+08:00 ] ::1 /index.php/user/passPayAudit/
+00001: 2017-03-02 16:18 用户 [1] 1 更新 成功 ==>UPDATE `em_user_card_list` SET `is_default`='1',`status`='1' WHERE `id` = 4 || URL=/index.php/user/passPayAudit/
+[ 2017-03-02T16:18:46+08:00 ] ::1 /index.php/Home/User/denyPayAudit.html
+00001: 2017-03-02 16:18 用户 [1] 1 更新 成功 ==>UPDATE `em_user_card_list` SET `status`='2',`description`='测试' WHERE `id` = 6 || URL=/index.php/Home/User/denyPayAudit.html
+[ 2017-03-02T08:18:46+00:00 ] ::1 /index.php/Home/User/denyPayAudit.html
+00001: 2017-03-02 08:18 用户 [1] 1 更新 成功 ==>INSERT INTO `em_message` (`type`,`send_uid`,`get_uid`,`content`,`create_time`,`create_uid`) VALUES ('1','1','1','非常抱歉，因为银行预留手机不一致问题，支付认证失败了！有疑问请直接联系我们！','1488442726','1') || URL=/index.php/Home/User/denyPayAudit.html
+[ 2017-03-02T16:51:58+08:00 ] ::1 /index.php/user/passPayAudit/
+00001: 2017-03-02 16:51 用户 [1] 1 更新 成功 ==>UPDATE `em_user` SET `pay_status`='2' WHERE `id` = 1 || URL=/index.php/user/passPayAudit/
+[ 2017-03-02T16:51:58+08:00 ] ::1 /index.php/user/passPayAudit/
+00001: 2017-03-02 16:51 用户 [1] 1 更新 成功 ==>UPDATE `em_user_card_list` SET `is_default`='1',`status`='1',`audit_uid`='1',`audit_username`='admin',`audit_time`='1488444718' WHERE `id` = 4 || URL=/index.php/user/passPayAudit/
+[ 2017-03-02T16:53:14+08:00 ] ::1 /index.php/Home/User/denyPayAudit.html
+00001: 2017-03-02 16:53 用户 [1] 1 更新 成功 ==>UPDATE `em_user_card_list` SET `status`='1',`description`='测试数据',`audit_uid`='1',`audit_username`='admin',`audit_time`='1488444794' WHERE `id` = 6 || URL=/index.php/Home/User/denyPayAudit.html
+[ 2017-03-02T08:53:14+00:00 ] ::1 /index.php/Home/User/denyPayAudit.html
+00001: 2017-03-02 08:53 用户 [1] 1 更新 成功 ==>INSERT INTO `em_message` (`type`,`send_uid`,`get_uid`,`content`,`create_time`,`create_uid`) VALUES ('1','1','1','非常抱歉，因为银行预留手机不一致问题，支付认证失败了！有疑问请直接联系我们！','1488444794','1') || URL=/index.php/Home/User/denyPayAudit.html
+[ 2017-03-02T16:54:18+08:00 ] ::1 /index.php/Home/User/denyPayAudit.html
+00001: 2017-03-02 16:54 用户 [1] 1 更新 成功 ==>UPDATE `em_user_card_list` SET `status`='2',`description`='测试测试而已',`audit_uid`='1',`audit_username`='admin',`audit_time`='1488444858' WHERE `id` = 6 || URL=/index.php/Home/User/denyPayAudit.html
+[ 2017-03-02T08:54:18+00:00 ] ::1 /index.php/Home/User/denyPayAudit.html
+00001: 2017-03-02 08:54 用户 [1] 1 更新 成功 ==>INSERT INTO `em_message` (`type`,`send_uid`,`get_uid`,`content`,`create_time`,`create_uid`) VALUES ('1','1','1','非常抱歉，因为银行预留手机不一致问题，支付认证失败了！有疑问请直接联系我们！','1488444858','1') || URL=/index.php/Home/User/denyPayAudit.html
+[ 2017-03-02T17:20:04+08:00 ] ::1 /index.php/user/passRealAudit/
+00001: 2017-03-02 17:20 用户 [1] 1 更新 成功 ==>UPDATE `em_user` SET `real_status`='2' WHERE `id` = 1 || URL=/index.php/user/passRealAudit/

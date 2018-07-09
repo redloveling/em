@@ -1,0 +1,665 @@
+//停机的时候，取消下一行的注释，发布
+//停机完成后，加上注释，发布
+// document.location.href="http://jkyx.qq.com/halt";
+
+//global info
+var g_add_type = 0;
+//0:添加   1:修改
+var g_card_type = 0;
+//0:身份证 1:其他证件
+
+if (getUrlPara("ioc") == "1") {
+g_card_type = 1;
+}
+
+String.prototype.realLength = function() {
+return this.replace(/[^\x00-\xff]/g, "**").length;
+}
+function getKuin() {
+
+if (Cookie.get("uin")) {
+var qqNum = Cookie.get("uin").split("o")[1];
+for (var i = 0; i < qqNum.length; i++) {
+if (qqNum.substr(i, 1) != 0) {
+subi = i;
+break
+}
+}
+qqNum = qqNum.substr(subi);
+return (Math.floor(qqNum) + 123456);
+} else {
+return 0;
+}
+
+/**
+* 由于天翼手机号登录不成功注释  by binnychen @ 20130918
+*
+if (LoginManager.getUserUin()) {
+var qqNum=Cookie.get("uin").split("o")[1];
+for(var i = 0; i < qqNum.length; i++)
+{if (qqNum.substr(i, 1) != 0) {subi = i;break}}
+qqNum=qqNum.substr(subi);
+
+return (Math.floor(qqNum)+123456);
+
+return (Math.floor(LoginManager.getUserUin()) + 123456);
+
+} else {
+return 0;
+}
+*/
+}
+
+function bindProvince(proName, cityName) {
+var province_name = "province";
+
+if ( typeof (proName) != "undefined") {
+province_name = proName;
+}
+
+var province = document.getElementById(province_name);
+for (var i in areaData) {
+if (i.indexOf('|') < 0) {
+var op = window.document.createElement("OPTION");
+op.value = i;
+op.innerHTML = areaData[i];
+province.appendChild(op);
+}
+}
+
+bindCity(province_name, cityName);
+}
+
+function bindCity(proName, cityName) {
+var city_name = "city";
+
+if ( typeof (cityName) != "undefined") {
+city_name = cityName;
+}
+
+var province_id = obj(proName).value;
+if (province_id.value == "") {
+alert("请选择省份");
+return;
+}
+
+var city = document.getElementById(city_name);
+
+while (city.childNodes.length) {
+city.removeChild(city.firstChild);
+}
+
+for (var i in areaData) {
+if (i.indexOf(province_id + '|') == 0) {
+var op = window.document.createElement("OPTION");
+op.value = i.replace(province_id + '|', '');
+op.innerHTML = areaData[i];
+city.appendChild(op);
+}
+}
+}
+
+//查询用户注册情况
+function queryUserReg() {
+var cUin = getKuin();
+if (cUin == "") {
+OpenLoginDiv();
+return;
+}
+
+var token = getACSRFToken();
+var sUrl = "http://app.jkyx.qq.com/cgi-bin/jkyx/hxsj_query.cgi?rd=" + Math.random() + "&k=" + cUin + "&g_tk=" + token;
+showWait();
+FloadJS(sUrl, queryUserRegSucc, queryUserRegSucc);
+}
+
+function showWait() {
+document.getElementById("t_rule").style.display = "none";
+document.getElementById("t_not_reg").style.display = "none";
+document.getElementById("others_way_reg").style.display = "none";
+document.getElementById("divInputInfo").style.display = "none";
+document.getElementById("t_wait").style.display = "";
+}
+
+function queryUserRegSucc() {
+document.getElementById("t_wait").style.display = "none";
+
+if ( typeof (jsonJkyx) == "undefined") {
+showErrorInfo("很抱歉, 查询失败");
+return;
+}
+
+if (jsonJkyx.result == "1") {
+//参数检查
+var strUin = getUrlPara("uin");
+var strInfo = getUrlPara("info");
+if (strUin != "" && strInfo != "") {
+autoAddUserInfo();
+return;
+}
+
+//用户未注册,显示输入页面
+document.getElementById("t_not_reg").style.display = "";
+
+if (LoginManager.getUserUin()) {
+var qqNum = LoginManager.getUserUin();
+document.getElementById("str_show_qq_num2").innerHTML = qqNum;
+}
+
+if (getUrlPara("ioc") == "1") {
+document.getElementById("others_way_reg").style.display = "";
+} else {
+document.getElementById("divInputInfo").style.display = "";
+}
+return;
+} else if (jsonJkyx.result == "2") {
+var subi = '';
+//显示注册信息
+if (LoginManager.getUserUin()) {
+var qqNum = LoginManager.getUserUin();
+document.getElementById("str_qq_num1").innerHTML = qqNum;
+}
+
+//显示注册信息
+document.getElementById("t_rule").style.display = "";
+document.getElementById("liIdCode").style.display = "none";
+document.getElementById("liName").style.display = "none";
+document.getElementById("ulExplan").style.display = "none";
+document.getElementById("btReset").style.display = "none";
+document.getElementById("btQx").style.display = "";
+
+document.getElementById("txtRealName").value = unescape(jsonJkyx.name);
+//document.getElementById("txtAddress").value  = unescape(jsonJkyx.address);
+if (jsonJkyx.province != "0") {
+document.getElementById("province").value = jsonJkyx.province;
+bindCity("province", "city");
+
+document.getElementById("o_province").value = jsonJkyx.province;
+bindCity("o_province", "o_city");
+
+}
+if (jsonJkyx.city != "0") {
+document.getElementById("city").value = jsonJkyx.city;
+document.getElementById("o_city").value = jsonJkyx.city;
+}
+
+document.getElementById("str_name").innerHTML = unescape(jsonJkyx.name).replace("<", "&lt;").replace(">", "&gt;");
+document.getElementById("str_id").innerHTML = unescape(jsonJkyx.uid);
+
+var strAddress = getProvincCityName(jsonJkyx.province, jsonJkyx.city) + unescape(jsonJkyx.address).replace("<", "&lt;").replace(">", "&gt;");
+if (strAddress == "0") {
+strAddress = "未填写";
+}
+document.getElementById("str_address").innerHTML = strAddress;
+
+if (jsonJkyx.child == "0") {
+document.getElementById("str_age").innerHTML = "已满18岁";
+} else {
+document.getElementById("str_age").innerHTML = "未满18岁 （受防沉迷系统的保护）";
+}
+
+if (jsonJkyx.child == "0") {
+document.getElementById("liOldThan18").style.display = "";
+} else {
+document.getElementById("liYoungThan18").style.display = "";
+}
+
+//var objCardName = document.getElementById("spanCardName");
+//if(jsonJkyx.card_type=="1")
+//{
+//objCardName = "";
+//}
+
+return;
+} else if (jsonJkyx.result == "-1") {
+//显示注册信息
+showErrorInfo("很抱歉, 系统繁忙");
+return;
+} else if (jsonJkyx.result == "-5") {
+//提示用户处理的太频繁
+showErrorInfo("很抱歉,您处理得太频繁了");
+return;
+} else if (jsonJkyx.result == "-2") {
+//提示用户要登录
+OpenLoginDiv();
+return;
+}
+
+}
+
+//显示出错信息
+function showErrorInfo(sMsg) {
+alert(sMsg);
+}
+
+function autoAddUserInfo() {
+var cUin = getKuin();
+if (cUin == "") {
+OpenLoginDiv();
+return;
+}
+
+//参数检查
+var strUin = getUrlPara("uin");
+var strInfo = getUrlPara("info");
+
+var token = getACSRFToken();
+//构造请求
+var sUrl = "http://app.jkyx.qq.com/cgi-bin/jkyx/sg_jkyx_add.cgi?uin=" + strUin + "&info=" + strInfo + "&rd=" + Math.random() + "&g_tk=" + token;
+
+showWait();
+FloadJS(sUrl, addUserInfoSucc, addUserInfoSucc);
+}
+
+function getCookie(name) {
+var value = document.cookie.match(new RegExp("(^| )" + name + "=([^;]*|$)"));
+return !value ? "" : unescape(value[2]);
+}
+
+function getACSRFToken() {
+var hash = 5381;
+var skey = document.cookie.match(new RegExp("(^| )skey=([^;]*|$)"));
+var str = !skey ? "" : unescape(skey[2]);
+for (var i = 0, len = str.length; i < len; ++i) {
+hash += (hash << 5) + str.charAt(i).charCodeAt();
+}
+return hash & 0x7fffffff;
+};
+
+function addUserInfo() {
+if (!doCheck()) {
+return;
+}
+
+var cUin = getKuin();
+if (cUin == "") {
+OpenLoginDiv();
+return;
+}
+
+//参数检查
+var strUserName = "";
+var strUserID = "";
+var strProvince = "";
+var strCity = "";
+var strAddress = "";
+var strBirthday = "";
+var strCardType = "0";
+
+if (g_card_type == 0) {
+strUserName = document.getElementById("txtRealName").value;
+strUserID = document.getElementById("txtIDCode").value;
+strProvince = document.getElementById("province").value;
+strCity = document.getElementById("city").value;
+strAddress = document.getElementById("txtAddress").value;
+} else {
+strUserName = document.getElementById("o_txtRealName").value;
+strUserID = document.getElementById("o_txtIDCode").value;
+strProvince = document.getElementById("o_province").value;
+strCity = document.getElementById("o_city").value;
+strAddress = document.getElementById("o_txtAddress").value;
+strBirthday = document.getElementById("txtYear").value + obj("dpMonth").value + obj("dpDay").value;
+strCardType = obj("dpCardType").value;
+}
+
+var token = getACSRFToken();
+
+//构造请求
+var sUrl = "http://app.jkyx.qq.com/cgi-bin/jkyx/jkyx_add.cgi?txtRealName=" + encodeURIComponent(strUserName) + "&txtIDCode=" + encodeURIComponent(strUserID) + "&province=" + strProvince + "&city=" + strCity + "&txtAddress=" + encodeURIComponent(strAddress) + "&txtBirthday=" + strBirthday + "&txtCardType=" + strCardType + "&k=" + cUin + "&g_tk=" + token;
+
+//如果是修改
+if (g_add_type == 1) {
+sUrl += "&strCmd=modify";
+}
+
+showWait();
+FloadJS(sUrl, addUserInfoSucc, addUserInfoSucc);
+}
+
+function addUserInfoSucc() {
+if ( typeof (jsonJkyx) == "undefined") {
+showErrorInfo("很抱歉,注册失败。您登录游戏的时候，可以选择关闭弹出的注册提示，先进行游戏，下一次登录游戏的时再尝试注册。");
+return;
+}
+
+document.getElementById("t_wait").style.display = "none";
+
+if (jsonJkyx.result == "0") {
+if (getUrlPara("surl") != "") {
+document.location.href = unescape(getUrlPara("surl"));
+return;
+}
+
+//注册成功,查询出来并显示
+document.getElementById("t_wait").style.display = "";
+setTimeout('queryUserReg()', 5000);
+return;
+} else if (jsonJkyx.result == "-1") {
+showErrorInfo(jsonJkyx.msg);
+//显示注册页面
+if (g_card_type == 0) {
+document.getElementById("divInputInfo").style.display = "";
+} else {
+document.getElementById("others_way_reg").style.display = "";
+}
+
+document.getElementById("t_not_reg").style.display = "";
+return;
+} else if (jsonJkyx.result == "-2") {
+//提示用户要登录
+OpenLoginDiv();
+return;
+} else {
+showErrorInfo("很抱歉,注册失败。您登录游戏的时候，可以选择关闭弹出的注册提示，先进行游戏，下一次登录游戏的时再尝试注册。");
+//显示注册页面
+//document.getElementById("t_not_reg").style.display   = "";
+
+if (g_card_type == 0) {
+document.getElementById("divInputInfo").style.display = "";
+} else {
+document.getElementById("others_way_reg").style.display = "";
+}
+
+document.getElementById("t_not_reg").style.display = "";
+return;
+}
+
+}
+
+function getProvincCityName(strProvince, strCity) {
+if (strProvince == "" || strProvince == "0") {
+return "";
+}
+
+if (areaData[strProvince] == null) {
+return "";
+}
+
+var strAreaDesc = areaData[strProvince];
+
+var strCity = areaData[strProvince + "|" + strCity];
+if (strCity != null) {
+strAreaDesc += strCity;
+}
+
+return strAreaDesc;
+}
+
+//修改信息
+function ModifyInfo() {
+if (document.getElementById("divInputInfo").style.display == "") {
+document.getElementById("divInputInfo").style.display = "none";
+} else {
+document.getElementById("divInputInfo").style.display = "";
+}
+
+g_add_type = 1;
+}
+
+//参数检查
+function check_name() {
+var check_result = true;
+
+var name_pre = "";
+if (g_card_type == "1") {
+name_pre = "o_";
+}
+
+var txtRealName = document.getElementById(name_pre + "txtRealName").value;
+
+if (txtRealName != "") {
+var pat = /^[\u4e00-\u9fa5]{2,10}$/;
+var patEnglish = /^[a-zA-Z]+(a-zA-Z.)*/;
+
+if (!pat.test(txtRealName) && !patEnglish.test(txtRealName)) {
+check_result = false;
+}
+} else {
+check_result = false;
+}
+
+if (!check_result) {
+document.getElementById(name_pre + "spanInputNameError").style.display = "";
+} else {
+document.getElementById(name_pre + "spanInputNameError").style.display = "none";
+}
+
+return check_result;
+}
+
+function check_id() {
+var check_result = true;
+
+var name_pre = "";
+if (g_card_type == "1") {
+name_pre = "o_";
+}
+var strMatch = /^[1-9a-zA-Z][0-9a-zA-Z]*$/;
+var txtID = document.getElementById(name_pre + "txtIDCode").value;
+if (txtID != "") {
+if (g_card_type == 0) {
+if (!txtID.isIDCard()) {
+check_result = false;
+}
+} else {
+if (txtID.realLength() < 40 && strMatch.test(txtID)) {
+check_result = true;
+} else {
+check_result = false;
+}
+}
+} else {
+check_result = false;
+}
+
+if (!check_result) {
+document.getElementById(name_pre + "spanInputId").style.display = "";
+} else {
+document.getElementById(name_pre + "spanInputId").style.display = "none";
+}
+
+return check_result;
+}
+
+function check_address() {
+var name_pre = "";
+if (g_card_type == "1") {
+name_pre = "o_";
+}
+
+if (document.getElementById(name_pre + "province").value != "") {
+if (document.getElementById(name_pre + "city").value == "") {
+document.getElementById(name_pre + "spanChooseCity").style.display = "";
+return false;
+} else {
+document.getElementById(name_pre + "spanChooseCity").style.display = "none";
+}
+}
+
+var txtAddress = document.getElementById(name_pre + "txtAddress").value;
+if (txtAddress.realLength() > 50) {
+document.getElementById(name_pre + "spanInputAddress").style.display = "";
+return false;
+} else {
+document.getElementById(name_pre + "spanInputAddress").style.display = "none";
+}
+
+return true;
+}
+
+function check_birthday() {
+document.getElementById("o_spanInputYearError").style.display = "none";
+
+var vYear = document.getElementById("txtYear").value;
+if (vYear == "") {
+document.getElementById("o_spanInputYearError").style.display = "";
+return false;
+}
+
+var re = /^\d{4}$/;
+
+if (!re.test(vYear)) {
+document.getElementById("o_spanInputYearError").style.display = "";
+return false;
+}
+
+return true;
+}
+
+function doCheck() {
+if (g_add_type == 0) {
+if (!check_name()) {
+return false;
+}
+
+if (!check_id()) {
+return false;
+}
+}
+
+if (!check_address()) {
+return false;
+}
+
+//
+if (g_card_type == 1) {
+if (!check_birthday()) {
+return false;
+}
+}
+
+return true;
+}/*  |xGv00|f2a6595470efb575a649d3f56c589562 */
+
+//new function
+function obj(dname) {
+return document.getElementById(dname);
+}
+
+function IsUserIDCard(blValue) {
+if (blValue) {
+obj("divInputInfo").style.display = "";
+obj("others_way_reg").style.display = "none";
+g_card_type = 0;
+} else {
+obj("divInputInfo").style.display = "none";
+obj("others_way_reg").style.display = "";
+g_card_type = 1;
+}
+}
+
+//绑定日期
+function OnChangeMonth() {
+var dMonth = obj("dpMonth");
+if (dMonth.value == "") {
+alert("请选择月份");
+return;
+}
+
+var iDays = 30;
+if (dMonth.value == "01" || dMonth.value == "03" || dMonth.value == "05" || dMonth.value == "07" || dMonth.value == "08" || dMonth.value == "10" || dMonth.value == "12") {
+iDays = 31;
+} else if (dMonth.value == 2) {
+iDays = 28;
+}
+
+var dDay = obj("dpDay");
+while (dDay.childNodes.length) {
+dDay.removeChild(dDay.firstChild);
+}
+
+for (var i = 1; i <= iDays; i++) {
+var option_value = i;
+if (i < 10) {
+option_value = "0" + option_value;
+}
+
+var op = window.document.createElement("OPTION");
+op.value = option_value;
+op.innerHTML = i;
+dDay.appendChild(op);
+}
+}
+
+function addUserOtherCardInfo() {
+if (!doCheck()) {
+return;
+}
+
+var cUin = getKuin();
+if (cUin == "") {
+OpenLoginDiv();
+return;
+}
+
+//参数检查
+var strUserName = document.getElementById("txtRealName").value;
+var strUserID = document.getElementById("txtIDCode").value;
+var strProvince = document.getElementById("province").value;
+var strCity = document.getElementById("city").value;
+var strAddress = document.getElementById("txtAddress").value;
+
+var token = getACSRFToken();
+//构造请求
+var sUrl = "http://app.jkyx.qq.com/cgi-bin/jkyx/jkyx_add.cgi?txtRealName=" + encodeURIComponent(strUserName) + "&txtIDCode=" + strUserID + "&province=" + strProvince + "&city=" + strCity + "&txtAddress=" + encodeURIComponent(strAddress) + "&k=" + cUin + "&g_tk=" + token;
+
+//如果是修改
+if (g_add_type == 1) {
+sUrl += "&strCmd=modify";
+}
+
+showWait();
+FloadJS(sUrl, addUserInfoSucc, addUserInfoSucc);
+}
+
+function addUserInfoSucc() {
+if ( typeof (jsonJkyx) == "undefined") {
+showErrorInfo("很抱歉,注册失败。您登录游戏的时候，可以选择关闭弹出的注册提示，先进行游戏，下一次登录游戏的时再尝试注册。");
+return;
+}
+
+document.getElementById("t_wait").style.display = "none";
+
+if (jsonJkyx.result == "0") {
+if (getUrlPara("surl") != "") {
+document.location.href = unescape(getUrlPara("surl"));
+return;
+}
+
+//注册成功,查询出来并显示
+document.getElementById("t_wait").style.display = "";
+setTimeout('queryUserReg()', 5000);
+return;
+} else if (jsonJkyx.result == "-1") {
+showErrorInfo(jsonJkyx.msg);
+//显示注册页面
+//document.getElementById("t_not_reg").style.display   = "";
+
+if (g_card_type == 0) {
+document.getElementById("divInputInfo").style.display = "";
+} else {
+document.getElementById("others_way_reg").style.display = "";
+}
+
+document.getElementById("t_not_reg").style.display = "";
+return;
+} else if (jsonJkyx.result == "-2") {
+//提示用户要登录
+OpenLoginDiv();
+return;
+} else {
+showErrorInfo("很抱歉,注册失败。您登录游戏的时候，可以选择关闭弹出的注册提示，先进行游戏，下一次登录游戏的时再尝试注册。");
+//显示注册页面
+//document.getElementById("t_not_reg").style.display   = "";
+
+if (g_card_type == 0) {
+document.getElementById("divInputInfo").style.display = "";
+} else {
+document.getElementById("others_way_reg").style.display = "";
+}
+
+document.getElementById("t_not_reg").style.display = "";
+return;
+}
+
+}/*  |xGv00|c65db56be4fe17066f298117f666bab5 */

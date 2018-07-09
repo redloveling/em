@@ -1,0 +1,114 @@
+
+.table-div-content .task-difficult {
+    width: 60px;
+    border-radius: 4px;
+    text-align: center;
+    line-height: 30px;
+    margin-right: 20px;
+    cursor: pointer;
+
+}
+.diff-1{
+    border: 2px solid #57c588;
+    color: #57c588;
+}
+.diff-2{
+    border: 2px solid #93c557;
+    color: #93c557;
+}
+.diff-3{
+    border: 2px solid #da9e56;
+    color: #da9e56;
+}
+.diff-4{
+    border: 2px solid #da7c56;
+    color: #da7c56;
+}
+.diff-5{
+    border: 2px solid #da6356;
+    color: #da6356;
+}
+.diff-1.task-difficult-active
+{  background-color: #57c588;}
+.diff-2.task-difficult-active
+{ background-color: #93c557;}
+.diff-3.task-difficult-active
+{  background-color: #da9e56;}
+.diff-4.task-difficult-active
+{  background-color: #da7c56;}
+.diff-5.task-difficult-active
+{  background-color: #da6356;}
+.task-difficult-active
+{ color: #FFFFFF;}
+
+.input-no-right{
+    border-right: 0px;
+    border-radius:0px 0px 2px 2px;
+}
+.input-right{
+    width: 30px;
+    text-align: center;
+    line-height: 34px;
+    height: 34px;
+    border: 1px solid #dedede;
+    color: #999999;
+    margin-left: -5px;
+    vertical-align:middle;
+    margin-top: 5px;
+}
+.sex-limit{
+    width: 60px;
+    border-radius: 4px;
+    text-align: center;
+    line-height: 30px;
+    margin-right: 20px;
+    border: 2px solid #62758f;
+    font-size: 14px;
+    color: #62758f;
+    font-weight:bold ;
+    cursor: pointer;
+}
+.sex-limit-active{
+    color: #FFFFFF;
+    background-color: #62758f;
+}
+.wage-list{
+    width: 60px;
+    border-radius: 4px;
+    text-align: center;
+    line-height: 30px;
+    margin-right: 20px;
+    border: 2px solid #62758f;
+    font-size: 14px;
+    color: #62758f;
+    font-weight:bold ;
+    cursor: pointer;
+}
+.wage-list-active{
+    color: #FFFFFF;
+    background-color: #62758f;
+}
+#saveTask{
+    margin-left: 10%;
+    width: 270px;
+    height: 60px;
+    background:url('btn_save.png') no-repeat;
+    float: left;
+    cursor: pointer;
+}
+#releaseTask{
+    margin-left: 2%;
+    width: 270px;
+    height: 60px;
+    background:url('btn_release.png') no-repeat;
+    float: left;
+    cursor: pointer;
+}
+#saveTask:hover{
+    background:url('btn_save_hover.png') no-repeat;
+
+}
+#releaseTask:hover{
+    background:url('btn_release_hover.png') no-repeat;
+
+}

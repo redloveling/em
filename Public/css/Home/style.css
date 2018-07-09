@@ -1,0 +1,45 @@
+.body{
+    padding: 8px;
+}
+.title {
+    width: 100%;
+    height: 40px;
+    border-bottom: 2px solid;
+    border-bottom-color: #00a0d2;
+    padding: 0px;
+}
+
+.title h1 {
+    padding: 5px;
+    font-size: 18px ;
+}
+
+.web_user_table {
+    width: 100%;
+    height: 93%;
+}
+.page{
+    position: fixed;
+    bottom: 10px;
+    width: 100%;
+    text-align: center ;
+}
+.page li{
+    list-style-type: none;
+}
+.page a, .page span , .page li{
+    position: relative;
+    padding: 6px 12px;
+    margin-left: -1px;
+    line-height: 1.42857143;
+    color: #428bca;
+    text-decoration: none;
+    background-color: #fff;
+    border: 1px solid #ddd;
+}
+
+.page a:hover, .page a:focus, .page span{
+    color: #2a6496;
+    background-color: #eee;
+    border-color: #ddd;
+}

@@ -1,0 +1,10 @@
+[ 2017-02-09T14:41:18+08:00 ] ::1 /index.php/AdminRole/access.html
+00001: 2017-02-09 14:41 用户 [1] 1 更新 成功 ==>INSERT INTO `em_admin_role_node` (`business_id`,`role_id`,`node_id`,`create_time`,`create_uid`) VALUES ('0','1','1','1486622478','1') || URL=/index.php/AdminRole/access.html
+[ 2017-02-09T14:41:18+08:00 ] ::1 /index.php/AdminRole/access.html
+00001: 2017-02-09 14:41 用户 [1] 1 更新 成功 ==>INSERT INTO `em_admin_role_node` (`business_id`,`role_id`,`node_id`,`create_time`,`create_uid`) VALUES ('0','1','2','1486622478','1') || URL=/index.php/AdminRole/access.html
+[ 2017-02-09T14:41:18+08:00 ] ::1 /index.php/AdminRole/access.html
+00001: 2017-02-09 14:41 用户 [1] 1 更新 成功 ==>INSERT INTO `em_admin_role_node` (`business_id`,`role_id`,`node_id`,`create_time`,`create_uid`) VALUES ('0','1','7','1486622478','1') || URL=/index.php/AdminRole/access.html
+[ 2017-02-09T14:41:18+08:00 ] ::1 /index.php/AdminRole/access.html
+00001: 2017-02-09 14:41 用户 [1] 1 更新 成功 ==>INSERT INTO `em_admin_role_node` (`business_id`,`role_id`,`node_id`,`create_time`,`create_uid`) VALUES ('0','1','8','1486622478','1') || URL=/index.php/AdminRole/access.html
+[ 2017-02-09T14:41:18+08:00 ] ::1 /index.php/AdminRole/access.html
+00001: 2017-02-09 14:41 用户 [1] 1 更新 成功 ==>INSERT INTO `em_admin_role_node` (`business_id`,`role_id`,`node_id`,`create_time`,`create_uid`) VALUES ('0','1','17','1486622478','1') || URL=/index.php/AdminRole/access.html

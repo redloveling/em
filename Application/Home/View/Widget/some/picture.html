@@ -1,0 +1,30 @@
+<extend name="Base:layout_frame"/>
+<block name="js">
+    <script type="application/javascript" src="__PUBLIC__/js/Home/task/index.js"></script>
+</block>
+<block name="css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/Home/task/add.css">
+</block>
+
+<block name="content">
+    <div class="" style="margin-left: 5px;margin-top: 0px">
+
+
+        <div id="register-info" class="panel-collapse panel-body collapse in">
+            <?php if($list){foreach($list as $value){?>
+            <div class="row" style="text-align: center">
+                <div class="col-xs-12 col-sm-2 col-md-2">
+                    <label></label>
+                </div>
+                <div class="col-xs-12 col-sm-10 col-md-10">
+                    <img src="<?=$value['file_location']?>" style="width: 80%;height: auto" >
+                </div>
+
+            </div>
+            <?php }}?>
+        </div>
+
+
+
+    </div>
+</block>

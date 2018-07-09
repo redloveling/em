@@ -1,0 +1,17 @@
+<extend name="Base:layout_frame"/>
+
+<block name="js">
+    <script src="__PUBLIC__/js/home/extension/directDetail.js" type="text/javascript"></script>
+
+</block>
+<block name="content">
+    <div class="" style="margin-left: 5px;margin-top: 0px" >
+        <div id="myTabContent" class="tab-content">
+            <input type="hidden" name="cId" value="<?=$cId?>" id="cId"/>
+            <input type="hidden" name="type" value="<?=$type?>" id="type"/>
+            <table id="directTab" data-toggle="table">
+            </table>
+
+        </div>
+    </div>
+</block>

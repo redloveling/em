@@ -1,0 +1,45 @@
+<div class="form-group">
+    <img src="__PUBLIC__/images/common/img_point1.png"/>&nbsp;<label>筛选用户</label>
+    <div style="height: 12px"></div>
+    <select class="selectpicker form-inline" id="userCategoryId"  name="userCategoryId" data-width="424" data-live-search="true" >
+        <?php if($userCategoryList){ foreach($userCategoryList as $key=>$value){?>
+        <option value="<?=$key?>"><?=$value?></option>
+        <?php }}?>
+    </select>
+</div>
+<br/>
+<div class="form-group">
+    <img src="__PUBLIC__/images/common/img_point1.png"/>&nbsp;<label>选择人员</label>
+    <div style="height: 12px"></div>
+    <select  multiple=multiple class="selectpicker form-inline" id="userListId" name="userListId" data-width="424" data-live-search="true" >
+        <?php if($userList){?>
+        <option value="all" selected>所有</option>
+        <?php foreach($userList as $value){?>
+        <option value="<?=$value['id']?>"><?=rtrim(($value['true_name']?$value['true_name']:$value['username']).','.sex_trans($value['sex']).','.($value['age']?$value['age']:''),',')?></option>
+        <?php }}?>
+    </select>
+</div>
+<br/>
+<script>
+    $('#userCategoryId').on('changed.bs.select', function (e) {
+        var userCategoryId = $('#userCategoryId').selectpicker('val')
+        $.ajax({
+            url:'{:U("Home/Ajax/getUserListByCategory/")}',
+            data:{userCategory:userCategoryId},
+            type:'post',
+            success:function(data){
+                $("#userListId").find("option").remove();
+                $('#userListId').selectpicker('refresh');
+                if(data.length>0){
+                    $("#userListId").append('<option value="all" selected>所有</option>');
+                    for(var i=0;i<data.length;i++){
+                        var myOption = '<option value="'+data[i].id+'">'+data[i].user+'</option>';
+                        $("#userListId").append(myOption);
+                    }
+                }
+                $('#userListId').selectpicker('refresh');
+            }
+        })
+
+    });
+</script>

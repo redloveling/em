@@ -1,0 +1,50 @@
+<extend name="Base:layout_frame"/>
+<block name="js">
+    <script type="application/javascript" src="__PUBLIC__/js/Home/usertask/donelist.js"></script>
+    <script type="application/javascript" src="__PUBLIC__/js/Home/usertask/usertask.js"></script>
+</block>
+<block name="css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/Home/task/usertask.css">
+</block>
+
+<block name="content">
+    <div class="div-pan" >
+        <input type="hidden" name="taskId" id="taskId" value="<?=$taskId?>"/>
+        {:W('Task/taskHeader',array($taskId))}
+        <div id="myTabContent" class="tab-content">
+            <div class="tab-div-pan" >
+                <div class="form-inline" class="search-tool" id="search-tool">
+
+                    <select data-width="150" class="selectpicker form-inline" name="" id="status" class="form-control">
+                        <option value="0">全部名单</option>
+                        <option value="2">任务完成</option>
+                        <option value="0,1">任务失败</option>
+                    </select>
+                    &nbsp;&nbsp;<label>报名时间:</label>
+                    <input type="text" class="Wdate form-control" id="start_time" name="start_time" value="" style="height: 32px;width: 150px;display: inline-flex" onFocus="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm'})"/>
+                    --<input type="text" class="Wdate form-control" id="end_time" name="start_time" value="" style="height: 32px;width: 150px;display: inline-flex" onFocus="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm'})"/>
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                    <select data-width="150"name="" class="selectpicker form-inline" id="selectList" class="form-control">
+                        <option value="username">姓名</option>
+                        <option value="card_num">身份证号</option>
+                        <option value="age">年龄</option>
+                        <option value="sex">性别</option>
+                        <option value="education">学历</option>
+                    </select>
+                    &nbsp;&nbsp;
+                    <input type="text" name="keyWord" id="keyWord" class="form-control"  value="" placeholder="输入关键字词查询" style="width: auto">
+
+                    <input class="ic-query" type="button" onclick="tableRefresh('tab')"/>
+                    <input class="ic-reset" type="button" onclick="resetButton('1,2','tab')"/>
+                </div>
+                <div style="height: 20px;border-bottom: 1px dashed #dfdfdf"></div>
+            <div id="toolbar">
+                <button onclick="userTaskExport('userTaskDoneList')" type="button" class="common-button export-button-large">导出报名名单</button>
+            </div>
+            <table id="tab" data-toggle="table">
+
+            </table>
+            </div>
+        </div>
+    </div>
+</block>

@@ -1,0 +1,58 @@
+.register-info{
+    width: 299px;
+	height:100%;
+	overflow:hidden;
+    float: left;
+}
+
+.id-info{
+    float: left;
+    width: 400px;
+	height:100%;
+	overflow:hidden;
+    border-left: 1px dashed #c7c7c7;
+    border-right: 1px dashed #c7c7c7;
+}
+.pay-info{
+    float: left;
+    width: 299px;
+	height:100%;
+	overflow:hidden;
+}
+.user-info .user-title{
+	display: block;
+	width:100%;
+	height:auto;
+	overflow:hidden;
+	margin-top: 10px;
+    font-size:16px ;
+    font-weight: bold;
+    color: #f39800;
+    margin-left: 18px;
+}
+.user-info table tr td{
+    font-size: 14px;
+    color: #666666;
+    padding-bottom: 20px;
+}
+.user-info table{
+    width: 85%;
+    margin-left: 18px;
+    margin-top: 14px;
+}
+.user-info table .left{
+    text-align: left;
+}
+.user-info table .right{
+    text-align: right;
+}
+.default-card{
+    position:absolute;
+    right: 70px;
+    top:110px;
+    width:100px;
+    height:100px;
+    z-index:-1;
+    font-size: 30px;
+    color:#008000;
+}

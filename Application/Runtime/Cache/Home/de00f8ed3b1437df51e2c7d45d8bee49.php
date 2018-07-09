@@ -1,0 +1,45 @@
+<?php if (!defined('THINK_PATH')) exit();?><div class="form-group">
+    <img src="/Public/images/common/img_point1.png"/>&nbsp;<label>选择任务</label>
+    <div style="height: 12px"></div>
+    <select class="selectpicker form-inline" id="taskId"  name="taskId" data-width="424" data-live-search="true" >
+        <?php if($taskList){ foreach($taskList as $value){?>
+        <option value="<?=$value['id']?>"><?=$value['title'].','.($value['issued_time']?date('Y-m-d H:i',$value['issued_time']):'')?></option>
+        <?php }}?>
+    </select>
+</div>
+<br/>
+<div class="form-group">
+    <img src="/Public/images/common/img_point1.png"/>&nbsp;<label>选择人员</label>
+    <div style="height: 12px"></div>
+    <select  class="selectpicker form-inline" id="userId" name="userId" data-width="424" data-live-search="true" >
+        <?php if($userList){?>
+        <option value="all">所有</option>
+        <?php foreach($userList as $value){?>
+        <option value="<?=$value['id']?>"><?=$value['username']?></option>
+        <?php }}?>
+    </select>
+</div>
+<br/>
+<script>
+    $('#taskId').on('changed.bs.select', function (e) {
+        var taskId = $('#taskId').selectpicker('val')
+        $.ajax({
+            url:'<?php echo U("Home/Ajax/getUserListByTaskId/");?>',
+            data:{taskId:taskId},
+            type:'post',
+            success:function(data){
+                $("#userId").find("option").remove();
+                $('#userId').selectpicker('refresh');
+                if(data.length>0){
+                    $("#userId").append('<option value="all">所有</option>');
+                    for(var i=0;i<data.length;i++){
+                        var myOption = '<option value="'+data[i].id+'">'+data[i].username+'</option>';
+                        $("#userId").append(myOption);
+                    }
+                }
+                $('#userId').selectpicker('refresh');
+            }
+        })
+
+    });
+</script>

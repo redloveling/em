@@ -1,0 +1,11 @@
+.message-add-btn{
+    width:200px;
+    height: 50px;
+    background: url('/Public/images/common/btn_create.png')no-repeat;
+    border: 0px;
+    vertical-align: middle;
+}
+
+.message-add-btn:hover{
+    background: url('/Public/images/common/btn_create_hover.png') no-repeat;
+}

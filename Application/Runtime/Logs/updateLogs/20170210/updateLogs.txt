@@ -1,0 +1,18 @@
+[ 2017-02-10T15:29:34+08:00 ] ::1 /index.php/banner/deleteBanner/id/3
+00001: 2017-02-10 15:29 用户 [1] 1 更新 成功 ==>UPDATE `em_banner` SET `status`='0' WHERE `id` = 3 || URL=/index.php/banner/deleteBanner/id/3
+[ 2017-02-10T15:29:59+08:00 ] ::1 /index.php/Banner/deleteBanner/
+00001: 2017-02-10 15:29 用户 [1] 1 更新 成功 ==>UPDATE `em_banner` SET `status`='0' WHERE `id` = 3 || URL=/index.php/Banner/deleteBanner/
+[ 2017-02-10T15:33:26+08:00 ] ::1 /index.php/Banner/deleteBanner/
+00001: 2017-02-10 15:33 用户 [1] 1 更新 成功 ==>UPDATE `em_banner` SET `status`='0' WHERE `id` = 4 || URL=/index.php/Banner/deleteBanner/
+[ 2017-02-10T16:09:17+08:00 ] ::1 /index.php/Banner/deleteBanner/
+00001: 2017-02-10 16:09 用户 [1] 1 更新 成功 ==>UPDATE `em_banner` SET `status`='0' WHERE `id` = 8 || URL=/index.php/Banner/deleteBanner/
+[ 2017-02-10T16:10:05+08:00 ] ::1 /index.php/Banner/deleteBanner/
+00001: 2017-02-10 16:10 用户 [1] 1 更新 成功 ==>UPDATE `em_banner` SET `status`='0' WHERE `id` = 8 || URL=/index.php/Banner/deleteBanner/
+[ 2017-02-10T16:11:33+08:00 ] ::1 /index.php/Banner/deleteBanner/
+00001: 2017-02-10 16:11 用户 [1] 1 更新 成功 ==>UPDATE `em_banner` SET `status`='0' WHERE `id` = 5 || URL=/index.php/Banner/deleteBanner/
+[ 2017-02-10T16:23:38+08:00 ] ::1 /index.php/Banner/deleteBanner/
+00001: 2017-02-10 16:23 用户 [1] 1 更新 成功 ==>UPDATE `em_banner` SET `status`='0' WHERE `id` = 5 || URL=/index.php/Banner/deleteBanner/
+[ 2017-02-10T16:23:42+08:00 ] ::1 /index.php/Banner/deleteBanner/
+00001: 2017-02-10 16:23 用户 [1] 1 更新 成功 ==>UPDATE `em_banner` SET `status`='0' WHERE `id` = 8 || URL=/index.php/Banner/deleteBanner/
+[ 2017-02-10T17:05:33+08:00 ] ::1 /index.php/Banner/deleteBanner/
+00001: 2017-02-10 17:05 用户 [1] 1 更新 成功 ==>UPDATE `em_banner` SET `status`='0' WHERE `id` = 5 || URL=/index.php/Banner/deleteBanner/

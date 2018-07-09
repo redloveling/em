@@ -1,0 +1,45 @@
+<extend name="Base:layout_frame"/>
+
+
+<block name="content">
+
+    <div class="">
+            <div class="col-md-2" style="padding-top: 15px">
+                <div id="myTabContent" class="tab-content">
+                    <div class="tab-pane active in" id="home">
+                        <form id="formId" method="post" name='formId' action='{:U("Node/edit")}'>
+                            <input type="hidden" name="id" value="{$nodeInfo.id}"/>
+                            <div class="form-group">
+                                <label>节点名字</label>
+                                <input type="text" name="name" value="{$nodeInfo.name}" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label>节点代码</label>
+                                <input type="text" name="code" value="{$nodeInfo.code}" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label>所属分组</label>
+                                {:W('Node/select',array('id'=>$nodeInfo['id']))}
+                            </div>
+                            <div class="form-group">
+                                <label>状态</label>
+                                <span class="form-control">
+                                <label style="width: 100px"><input type="radio" name="status" value="1" <?php if($nodeInfo['status']==1){echo 'checked="true"';}?>/>正常</label>
+                                <label><input type="radio" name="status" value="0" <?php if($nodeInfo['status']==0){echo 'checked="true"';}?>/>禁用</label>
+                                </span>
+                            </div>
+
+                            <div class="form-group">
+                                <label>描述</label>
+                                 <textarea name="description"  rows="3" class="form-control">{$nodeInfo.description}</textarea>
+                            </div>
+
+
+                        </form>
+                    </div>
+                </div>
+
+                <button class="ok-btn center-block" onclick="fromSubmit('formId')"></button>
+            </div>
+    </div>
+</block>

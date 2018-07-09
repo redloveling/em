@@ -1,0 +1,55 @@
+<extend name="Base:layout_frame"/>
+
+<block name="js">
+    <script src="__PUBLIC__/js/home/widget/user/usertaskhistory.js" type="text/javascript"></script>
+</block>
+<block name="css">
+    <link href="__PUBLIC__/css/Home/widget/usertaskhistory.css" rel='stylesheet' type='text/css'/>
+</block>
+<block name="content">
+
+        <input type="hidden" name="userId" id="userId" value="<?=$userInfo['id']?>"/>
+        <div class="table-div top" >
+            <div class="table-div-content" >
+                <div style="height: 100%;float: left ;width: 45%;" >
+                    <div style="float: left ;width: 40%">
+                        <img style="margin-left: 55px" src="<?=$userInfo['avatar_file']?$userInfo['avatar_file']:'__PUBLIC__/images/common/ic_avator.png'?>" onerror="this.src='__PUBLIC__/images/common/ic_avator.png'" height="100" width="100">
+                        <div style="height: 20px"></div>
+                        <button class="common-button user-detail" onclick="getUserInfo(<?=$userInfo['id']?>)">用户详情</button>
+                    </div>
+                    <div>
+                        <ul class="list-unstyled">
+                            <li class="task-history-li" ><?=$userInfo['true_name']?>&nbsp;&nbsp;性别：<?=$userInfo['sex_name']?>&nbsp;&nbsp;学历：<?=$userInfo['education_name']?></li>
+                            <li class="task-history-li">手机：<?=$userInfo['tell']?></li>
+                            <li class="task-history-li" >身份证：<?=$userInfo['card_num']?></li>
+                            <li class="task-history-li" >注册时间：<?=$userInfo['reg_time']?date('Y-m-d H:i',$userInfo['reg_time']):''?></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="task-history-left">
+                    <img src="__PUBLIC__/images/common/img_point1.png"/><font>&nbsp;兼职报名任务记录</font>
+                    <ul class="list-unstyled" style="margin-top: 15px;margin-left: 10px">
+                        <li><font style="line-height: 30px;font-size: 16px;color: #555555;font-weight: bold">报名任务</font>&nbsp;&nbsp;&nbsp;<font style="font-size: 16px;color: #eb6877;font-weight: bold"><?=$userInfo['count']['totalCount']?></font></li>
+                        <li><font style="line-height: 30px;font-size: 16px;color: #555555;font-weight: bold">参加任务</font>&nbsp;&nbsp;&nbsp;<font style="font-size: 16px;color: #eb6877;font-weight: bold"><?=$userInfo['count']['joinCount']?></font></li>
+
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-list" style="margin-left: 10px;width: 98%;">
+            <div class="main-content ">
+                <div class="tab-div-pan <?php if($value['checked']==1){ echo 'active-pan';}?>" id="tab-div-pan-<?=$value['id']?>"  >
+
+
+                    <div class="form-inline" style="margin-top: 20px">
+                        <span class="span-title">任务历史列表</span>
+                    </div>
+                    <table id="userTaskHistoryTab" data-toggle="table">
+
+                    </table>
+                </div>
+            </div>
+        </div>
+
+</block>

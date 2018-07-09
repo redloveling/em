@@ -1,0 +1,24 @@
+ .top{
+    height:178px;margin-top: 10px;margin-left: 10px;width: 98%;
+}
+.task-history-li{
+    font-size: 14px;
+    color: #555555;
+    line-height: 25px;
+}
+.user-detail{
+    color: #2eafcc;
+}
+.task-history-left{
+    float: left ;
+    background: url('/Public/images/common/img1.png') center 50px no-repeat;
+    height: 178px;
+    width:55%;
+    padding-left: 125px;
+}
+.span-title{
+    margin-left: 20px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #494949;
+}

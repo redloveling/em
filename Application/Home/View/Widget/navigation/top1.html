@@ -1,0 +1,31 @@
+
+<style type="text/css">
+
+    .navbar-default .navbar-brand, .navbar-default .navbar-brand:hover {
+        color: #fff;
+    }
+</style>
+
+<script type="text/javascript">
+    $(function() {
+        var uls = $('.sidebar-nav > ul > *').clone();
+        uls.addClass('visible-xs');
+        $('#main-menu').append(uls.clone());
+    });
+</script>
+
+
+<div class="navbar navbar-default top"   role="navigation" >
+    <div class="navbar-header">
+
+        <a class="" href="index.html"><span class="navbar-brand">EM后台管理系统</span></a></div>
+
+    <div class="navbar-collapse collapse" style="height: 1px;">
+        <div id="main-menu" class="nav navbar-nav navbar-right">
+
+            <span style="cursor:pointer"  class="navbar-brand"><i class="glyphicon glyphicon-user"></i> <?=$user_info['username']?> &nbsp;<i  title="退出" onclick='window.location.href="{:U(\'Home/Public/loginOut/')}"' class="glyphicon glyphicon-off"></i></span>
+        </div>
+
+    </div>
+</div>
+</div>

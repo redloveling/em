@@ -1,0 +1,12 @@
+PHP
+1、phpexcel
+2、phpword
+3、上传文件
+4、文本编辑编辑
+5、百度地图
+
+JS 
+JQ、layer、jq_gridster、jquery.form、extJs
+
+HTML
+ bootstrap

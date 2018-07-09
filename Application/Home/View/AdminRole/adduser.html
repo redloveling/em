@@ -1,0 +1,18 @@
+<extend name="Base:layout_frame"/>
+
+<block name="js">
+    <script src="__PUBLIC__/js/home/adminrole/adduser.js" type="text/javascript"></script>
+
+</block>
+<block name="content">
+        <div class="main-content">
+            <div class="web_user_table" style=" margin:0px 15px;">
+                <input type="hidden" id="roleId" name="id" value="<?=$_GET['roleId']?>"/>
+                <input type="hidden" id="businessId" name="businessId" value="<?=$_GET['businessId']?>"/>
+                <table id="mytab_frame" data-toggle="table" style="border-bottom:0px;">
+                </table>
+            </div>
+        </div>
+        <br/>
+        <button class="ok-btn center-block" onclick="saveUser()"></button>
+</block>

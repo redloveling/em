@@ -1,0 +1,51 @@
+<div>
+<?php if($thirdList){?>
+    <select class="selectpicker form-inline" name="thirdList" id="thirdList" class="form-control" data-width="130"data-live-search="true">
+
+        <option value="0">--请选择--</option>
+        <foreach name="thirdList" item="vo" >
+            <option value="{$vo.id}" <?php if($vo['id']==$nodeInfo['id']){ echo 'selected="selected"'; }?>> {$vo.name}</option>
+        </foreach>
+    </select>
+<?php }else{ ?>
+    <select class="selectpicker form-inline" name="firstNode" id="firstNode" class="form-control" data-live-search="true">
+
+    <option value="0">--请选择--</option>
+    <foreach name="nodeList" item="vo" >
+        <option value="{$vo.id}" <?php if($vo['id']==$nodeInfo['pid']){ echo 'selected="selected"'; }?>> {$vo.name}</option>
+    </foreach>
+</select>
+    <!--<select class="selectpicker form-inline" name="secondNode" id="secondNode" class="form-control" data-width="140"data-live-search="true">-->
+
+    <!--<option value="0">--请选择--</option>-->
+    <!--<foreach name="secondList" item="vo" >-->
+        <!--<option value="{$vo.id}" <?php if($vo['pid']==$nodeInfo['id']){ echo 'selected="selected"'; }?>> {$vo.name}</option>-->
+    <!--</foreach>-->
+    </select>
+<?php }?>
+</div>
+<script>
+    $(function(){
+//        getSecondNode();
+    })
+    function getSecondNode(){
+        var val = $('#firstNode').val();
+        //$("#secondNode option[index!='0']").remove(); //删除Select
+        $.ajax({
+            url:'{:U("Home/Ajax/getChildNode")}',
+            data:{nodeId:val},
+            type:'post',
+            success:function(data){
+                if(data){
+                    for(var i=0;i<data.length;i++){
+                        var myOption = '<option value="'+data[i].id+'">'+data[i].name+'</option>';
+                        $("#secondNode").append(myOption);
+                    }
+                }else{
+                    var myOption = '<option value="0">--请选择--</option>';
+                    $("#secondNode").append(myOption);
+                }
+            }
+        })
+    }
+</script>

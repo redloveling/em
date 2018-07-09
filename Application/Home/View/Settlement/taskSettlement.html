@@ -1,0 +1,28 @@
+<extend name="Base:layout_frame"/>
+
+<block name="js">
+    <script src="__PUBLIC__/js/home/settlement/tasksettlement.js" type="text/javascript"></script>
+</block>
+<block name="css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/Home/task/usertask.css">
+</block>
+<block name="content">
+    <input type="hidden" id="settlementId" value="<?=$settlementId?>"/>
+    <div class="div-pan" >
+        <div id="myTabContent" class="tab-content">
+            <div class="tab-div-pan" >
+                    <div id="button">
+                        <?php if($info['status']==0){?>
+                        <button class="layui-btn" onclick="confirmSettlement(<?=$settlementId?>)">确认结算</button>
+                        <?php }?>
+                        <button class="layui-btn" onclick="exportWages(<?=$settlementId?>)">导出工资表</button>
+
+                    </div>
+                    <table id="mytab" data-toggle="table">
+
+                    </table>
+
+            </div>
+        </div>
+    </div>
+</block>

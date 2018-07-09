@@ -1,0 +1,42 @@
+#真的说到是要保存记录，哎，蛋碎了一地^_^
+
+#user_task插入的时候
+BEGIN
+     insert into em_user_task_log(user_task_id,user_id,task_id,business_id,title,log_status,status,status_1money,create_time,log_time,msg)
+     values(new.id,new.user_id,new.task_id,new.business_id,new.title,(select 1),new.status,new.status_1,new.money,new.create_time,(SELECT UNIX_TIMESTAMP(NOW())),'已报名/待录用');
+END
+
+
+#user_task更新的时候
+BEGIN
+#报名失败
+      if (OLD.status_1=1) and (new.status_1=2)
+     THEN
+         call user_task_log(new.id,2,'报名失败');
+     END if;
+#报名成功
+      if (OLD.status_1=1) and (new.status_1=3)
+     THEN
+         call user_task_log(new.id,3,'报名成功');
+     END if;
+#任务中
+      if (OLD.status_1=3) and (new.status_2=2)
+     THEN
+         call user_task_log(new.id,5,'任务中');
+     END if;
+#任务外
+      if (OLD.status_2=2) and (new.status_2=1)
+     THEN
+         call user_task_log(new.id,4,'任务外');
+     END if;
+#任务失败
+      if (OLD.status_2=1) and (new.status_3=1)
+     THEN
+         call user_task_log(new.id,6,'任务失败');
+     END if;
+#任务完成
+      if (OLD.status_2=2) and (new.status_3=2)
+     THEN
+         call user_task_log(new.id,7,'任务完成');
+     END if;
+END

@@ -1,0 +1,77 @@
+.task-header-left{
+    float: left;
+    width: 35%;
+    height: auto;
+}
+.task-header-left .center{
+    margin-left: 30px;
+    margin-top: 60px;
+}
+.task-header-left .center{
+    font-size: 20px;
+    font-weight: bold;
+    color: #555555;
+}
+.task-header-right{
+    float: left;
+	margin-left: 10%;
+    width: 55%;
+    height: 196px;
+    background: url("/Public/images/common/img1.png") 95px 75px no-repeat;;
+}
+.deadline{
+    margin-left: 32%;
+}
+.deadline .deadline-title{
+    padding-top: 10px;
+    border-left: 2px dashed #f39800;
+    border-right: 2px dashed #f39800;
+    font-size: 16px;
+    font-weight: bold;
+    color: #555555;
+    text-align: center;
+    width: 171px;
+	height: 40px;
+    margin-left: 22px;
+}
+.deadline-content{
+    border: 2px dashed #f39800;
+    border-radius: 10px;
+    text-align: center;
+    width: 215px;
+	height: 120px;
+    background-color: #fffbef;
+}
+.deadline-content .day{
+    font-size: 56px;
+    font-weight: bold;
+    color: #d66c6b;
+    vertical-align: inherit;
+}
+.deadline-content .day-font{
+    font-size: 18px;
+    font-weight: bold;
+    color: #b3b3b3;
+}
+.deadline-content .minute{
+    font-size: 20px;
+    font-weight: bold;
+    color: #d66c6b;
+}
+.deadline-content .deadline-font{
+    font-size: 16px;font-weight: bold;
+    color: #b3b3b3;
+}
+.deadline .deadline-content-1{
+    margin-top: 50px;
+}
+.deadline-content-1 .title-1{
+    font-size: 20px;
+    font-weight: bold;
+    color: #555555;
+}
+.deadline-content-1 .title-2{
+    font-size: 20px;
+    font-weight: bold;
+    color: #d66c6b;;
+}

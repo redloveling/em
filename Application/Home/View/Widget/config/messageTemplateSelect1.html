@@ -1,0 +1,31 @@
+<div class="form-group">
+    <img src="__PUBLIC__/images/common/img_point1.png"/>&nbsp;<label>选择模板</label>
+    <div style="height: 12px"></div>
+    <select class="selectpicker form-inline" id="templateId_brr"  name="templateId_brr" data-width="424" data-live-search="true" >
+        <?php if($list){ foreach($list as $key=>$value){?>
+        <option value="<?=$key?>"><?=$value['name']?></option>
+        <?php }}?>
+    </select>
+    <div style="border: 1px solid grey" id="templateDiv_brr">
+    <?=$firstDescription?>
+    </div>
+</div>
+<input type="hidden" id="templateP_brr" value="<?=$p?>"/>
+<script>
+    $('#templateId_brr').on('changed.bs.select', function (e) {
+        var templateId = $('#templateId_brr').selectpicker('val')
+        var templateP = $('#templateP_brr').val()
+        console.log(templateP)
+        $.ajax({
+            url:'{:U("Home/Ajax/getTemplateArr/")}',
+            data:{templateId:templateId,templateP:templateP},
+            type:'post',
+            success:function(data){
+                if(data.status==1){
+                    $('#templateDiv_brr').html(data.data.description)
+                }
+            }
+        })
+
+    });
+</script>

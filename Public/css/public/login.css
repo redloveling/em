@@ -1,0 +1,71 @@
+
+/****-----start-body----****/
+body{
+    background: url(../../images/bg1.jpg) no-repeat 0px 0px;
+    font-family: 'Open Sans', sans-serif;
+    background-size:cover;
+    -webkit-background-size:cover;
+    -moz-background-size:cover;
+    -o-background-size:cover;
+    min-height:100%;
+}
+
+/* 登录 */
+.login-box {
+    width:400px;
+    height:380px;
+    background-color: #FFFFFF;
+    border:1px solid #EEEEEE;
+
+    position: absolute;
+    top:50%;
+    left:50%;
+    margin-left:-200px;
+    margin-top:-190px;
+    -webkit-border-radius: 8px;
+    -moz-border-radius: 8px;
+    border-radius: 8px;
+    -webkit-box-shadow: #666 0 0 10px;
+    -moz-box-shadow: #666 0 0 10px;
+    box-shadow: #666 0 0 10px;
+}
+
+.login-body{
+    margin-left: 45px;
+}
+
+.login-body form > div {
+    height: 55px;
+}
+
+.login-box h1 {
+    font-size:16px;
+    font-weight: bold;
+    height:30px;
+    line-height:30px;
+    text-align:center;
+    margin-top:10px;
+}
+
+.login-box h2 {
+    font-size: 15px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.login-box form input[type=text],.login-box form input[type=password] {
+    width:250px;
+}
+
+.checkbox label {
+    margin-left: 50px;
+}
+
+.login a {
+    margin-left:36px;
+}
+
+/* end 登录 */
+
+
+

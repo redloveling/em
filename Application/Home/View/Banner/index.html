@@ -1,0 +1,52 @@
+<extend name="Base:layout"/>
+
+<block name="js">
+    <script src="__PUBLIC__/js/home/banner/index.js" type="text/javascript"></script>
+</block>
+<block name="css">
+    <link href="__PUBLIC__/css/Home/banner/index.css" rel='stylesheet' type='text/css'/>
+
+</block>
+<block name="content">
+    <div class="title-span">
+        <div>Banner管理</div>
+    </div>
+    <div class="table-div">
+        <div class="table-div-content" style="margin-bottom: -20px">
+            <div class="form-inline" >
+                <button class="common-button add-button-large" onclick="addBanner();">Banner添加</button>
+                <button style="margin-left: 450px" class="common-button pass-button" onclick="fromSubmit('formId','',confirmBanner);">确定</button>
+            </div>
+        </div>
+    </div>
+    <form id="formId" method="post" name='formId' action='{:U("Home/Banner/index")}'>
+
+    <?php foreach($bannerList as $key=>$value){?>
+    <div id="bannerImage<?=$key+1?>" class="table-div banner<?=$value['id']?>" >
+         <div class="table-div-content">
+            <!--{:W('fileUpload/bannerUpload',array('bannerImage'))}-->
+
+            {:W('fileUpload/bannerUpload',array($value['name']?$value['name']:'bannerImage1'))}
+
+             <div class="form-inline" style="margin-bottom: 10px">
+             <label style="font-weight: bold;font-size:14px;">Banner详情</label> &nbsp;&nbsp;
+             <label><input type="radio" name="type_<?=trim($value['name'],'bannerImage')?>" value="2" title="外部H5地址" <?php if($value['type']==2){echo 'checked';}?>>外部</label>
+             <label><input type="radio" name="type_<?=trim($value['name'],'bannerImage')?>" value="1" title="APP内部页面地址" <?php if($value['type']==1){echo 'checked';}?>>内部</label>
+            </div>
+            <textarea style="width: 55%" class="form-control" name="description_<?=trim($value['name'],'bannerImage')?>" id="description<?=$key+1?>" placeholder="输入地址：外部H5地址或APP内部页面地址" cols="3"><?=$value['description']?></textarea>
+        </div>
+    </div>
+    <?php }?>
+    <input type="hidden" id="bannerCount" name="bannerCount" value="<?=count($bannerList)?>"/>
+    <input type="hidden" id="bannerMaxId" name="bannerMaxId" value="<?=$maxId?>"/>
+    </form>
+    <div id="banner_temp" style="display: none;">
+    <div  class="table-div">
+        <div class="table-div-content">
+            {:W('fileUpload/bannerUpload',array('bannerImage'))}
+            <h3 style="font-weight: bold;font-size:14px; margin-bottom:10px;">Banner详情</h3>
+            <textarea style="width: 55%"class="form-control" name="description" id="description" placeholder="输入地址：外部H5地址或APP内部页面地址" cols="3"></textarea>
+        </div>
+    </div>
+    </div>
+</block>

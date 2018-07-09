@@ -1,0 +1,142 @@
+<extend name="Base:layout"/>
+
+<block name="js">
+    <script type="application/javascript" src="__PUBLIC__/js/Home/task/index.js"></script>
+</block>
+<block name="css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/Home/task/add.css">
+</block>
+<block name="content">
+    <div class="content" >
+        <div class="title">
+            <div><h3>任务管理>新建任务</h3></div>
+        </div>
+            <br/>
+        <form id="formId" method="post" name='formId' action='{:U("Home/Task/add")}'>
+        <div class="panel panel-default">
+            <a href="#base-info" class="panel-heading" data-toggle="collapse"><label>任务基本信息</label></a>
+            <div id="base-info" class="panel-collapse panel-body collapse in">
+                <div class="input-group col-md-8" style="margin-top: 10px">
+                    <span class="input-group-addon span-width">任务/职位标题</span>
+                    <input type="text" name="title" class="form-control"  placeholder="">
+                </div>
+                <div class="input-group col-md-8">
+                    <span class="input-group-addon span-width" style="border-right:1px solid #ccc ">任务难度等级</span>
+
+                    <div style="margin-left: 20px">
+                    <?php $taskType=C('task_type');foreach($taskType as $value){?>
+                        <span class="input-group-addon">
+						    <label class="red-task-div-label"><input name="task_type" type="radio" value="<?=$value['id']?>" <?php if($vo['task_type']==$value['id']){echo 'checked="true"';}elseif($value['checked']==1){echo 'checked="true"';}?>><?=$value['name']?></label>
+					    </span>
+                    <?php }?>
+
+                    </div>
+                </div>
+                <div class="input-group col-md-8" >
+                    <span class="input-group-addon span-width"  >招聘人数</span>
+                    <input type="text" name="person_num" class="form-control"  placeholder="">
+                    <span class="input-group-addon" style="background-color: #ffffff;border-left: 0px;">人</span>
+                    <?php $person_type=C('person_type');foreach($person_type as $value){?>
+                        <span class="input-group-addon">
+						    <label class="red-task-div-label"><input name="person_type" type="radio" value="<?=$value['id']?>" <?php if($vo['task_type']==$value['id']){echo 'checked="true"';}elseif($value['checked']==1){echo 'checked="true"';}?>><?=$value['name']?></label>
+					    </span>
+                    <?php }?>
+
+                </div>
+                <div class="input-group col-md-5">
+                    <span class="input-group-addon span-width">报名截止时间</span>
+                    <input type="text" class="Wdate form-control" name="deadline" value="<?php if($vo['deadline']){echo date('Y-m-d H:i');}else{echo date('Y-m-d H:i');}?>" style="height: 30px;width: 155px" onFocus="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm'})"/>
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <a href="#wages-info" class="panel-heading" data-toggle="collapse"><label>工资结算</label></a>
+            <div id="wages-info" class="panel-collapse panel-body collapse in">
+                <div class="input-group col-md-6" style="margin-top: 10px">
+                    <span class="input-group-addon span-width">工资</span>
+                    <input type="text" name="wages" class="form-control"  placeholder="">
+                    <span class="input-group-addon">元/</span>
+                    <?php $wages = C('wages');?>
+                    <select class="form-control" name="wages_type" style="width: 100px">
+                        <?php foreach($wages as $value){?>
+                        <option value="<?=$value['id']?>" <?php if($value['id']==2){ echo 'selected="true"';}?>><?=$value['name']?></option>
+                        <?php }?>
+                    </select>
+                </div>
+                <div class="input-group col-md-6">
+                    <span class="input-group-addon span-width">结算方式</span>
+                    {:W('Config/select',array('tb_settlement','settlement_type',6))}
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <a href="#work-info" class="panel-heading" data-toggle="collapse"><label>工作描述</label></a>
+            <div id="work-info" class="panel-collapse panel-body collapse in">
+                <div class="input-group col-md-8" style="margin-top: 10px">
+                    <span class="input-group-addon span-width">工作时间描述</span>
+                    <input name="work_time_description" type="text" class="form-control">
+                </div>
+                <div class="input-group col-md-8">
+                    <span class="input-group-addon span-width" style="width: 150px">工作时间</span>
+                    <input type="text" class="Wdate form-control" name="start_time" value="<?php if($vo['deadline']){echo date('Y-m-d H:i');}else{echo date('Y-m-d H:i');}?>" style="height: 34px;width: 155px" onFocus="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm'})"/>
+                    <input type="text" class="form-control"  placeholder="--" disabled=disabled style="width: 40px">
+                    <input type="text" class="Wdate form-control" name="end_time" value="<?php if($vo['deadline']){echo date('Y-m-d H:i');}else{echo date('Y-m-d H:i');}?>" style="height: 34px;width: 155px" onFocus="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm'})"/>
+                </div>
+                <div class="input-group col-md-8">
+
+                    <!--<div id="workArea_div">-->
+                    <!--&lt;!&ndash;{:W('Select/workArea')}&ndash;&gt;-->
+
+                    <!--</div>-->
+
+                </div>
+
+
+                <div class=" col-md-8" style="height: 450px;">
+                    {:W('Map/index')}
+
+                </div>
+                <br/>
+                <div class="input-group col-md-8">
+                </div>
+                <div class="input-group col-md-8">
+                    <span class="input-group-addon span-width">地点描述</span>
+                    <textarea name="place_description"  class="form-control" cols="50" rows="1"><?=$vo['place_description']?></textarea>
+                </div>
+                <div class="input-group col-md-8">
+                    <span class="input-group-addon span-width">工作描述</span>
+
+                    <textarea name="work_description" class="form-control"  rows="3" placeholder="如岗位职责，工作时间，工作…"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <a href="#contact-info" class="panel-heading" data-toggle="collapse"><label>联系方式</label></a>
+            <div id="contact-info" class="panel-collapse panel-body collapse in">
+                <div class="input-group col-md-4" style="margin-top: 10px;">
+                    <span class="input-group-addon span-width">联系人</span>
+                    <input type="text" name="contact" class="form-control" style="border-radius: 4px;">
+                </div>
+                <div class="input-group col-md-4">
+                    <span class="input-group-addon span-width">联系电话</span>
+                    <input type="text" name="contact_tell" class="form-control">
+                </div>
+                <div class="input-group col-md-4">
+                    <span class="input-group-addon span-width">咨询QQ</span>
+                    <input type="text" name="qq" class="form-control">
+                </div>
+
+            </div>
+        </div>
+            <input type="hidden" name="task_status" value="0" id="task_status"/>
+            <input type="hidden" name="firstAreaName" value="0" id="firstAreaName"/>
+            <input type="hidden" name="secondAreaName" value="0" id="secondAreaName"/>
+            <input type="hidden" name="thirdAreaName" value="0" id="thirdAreaName"/>
+        </form>
+        <br/>
+        <button style="margin-left: 200px" class="btn btn-primary" onclick="beforeASubmit();">保存任务</button>
+        <button style="margin-left: 100px"class="btn btn-primary " onclick="$('#task_status').val(1);beforeASubmit();">发布任务</button>
+        <div style="height:50px;margin-top: 20px"></div>
+
+    </div>
+</block>

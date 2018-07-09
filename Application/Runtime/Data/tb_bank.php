@@ -1,0 +1,1 @@
+a:2:{i:2;a:5:{s:2:"id";s:1:"2";s:4:"name";s:6:"建行";s:11:"description";s:12:"建设银行";s:6:"status";s:1:"1";s:11:"create_time";s:10:"1478073112";}i:3;a:5:{s:2:"id";s:1:"3";s:4:"name";s:6:"招行";s:11:"description";s:6:"招行";s:6:"status";s:1:"1";s:11:"create_time";s:10:"1478074645";}}
