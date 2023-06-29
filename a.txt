@@ -1,1 +1,687 @@
-dafda 
+package panel
+
+import (
+	"archive/zip"
+	"context"
+	"encoding/csv"
+	"encoding/json"
+	"errors"
+	"io"
+	"math"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+	"wt/econ/api/app/provider/public"
+
+	"git.code.tencent.com/liuzhenqiang/ghgame_framework/contract"
+	"git.code.tencent.com/liuzhenqiang/ghgame_framework/gin"
+	"git.code.tencent.com/liuzhenqiang/ghgame_framework/util/gslice"
+	"gitee.com/golang-module/carbon/v2"
+	"github.com/go-redis/redis/v8"
+	"github.com/shopspring/decimal"
+	"github.com/spf13/cast"
+	"gorm.io/gorm"
+)
+
+const ExportDir = "./storage/export/"
+
+var PaymentSituationDefaultGrouping = "[{\"label\":\"购买产品(礼包)名称\",\"labelEn\":\"payment_name\",\"descIcon\":\"\",\"dataType\":\"文本\",\"dataTypeEn\":\"text\",\"type\":1,\"queryType\":1,\"descText\":\"预制属性\",\"isCollection\":false,\"isHistory\":false,\"infoData\":{\"id\":1,\"remarks\":\"\",\"attributeType\":\"预制属性\",\"attributeName\":\"pay_currency\",\"displayName\":\"支付币种\",\"dataType\":\"文本\",\"number\":0,\"subject\":\"\",\"timeZone\":\"\",\"updateTime\":\"\",\"createUser\":\"\"},\"disabled\":false,\"id\":0,\"index\":0,\"valueType\":1,\"value\":[],\"hasOption\":false}]"
+var ChannelRegisterDefaultGrouping = "[{\"label\":\"登录方式\",\"labelEn\":\"platform\",\"descIcon\":\"\",\"dataType\":\"文本\",\"dataTypeEn\":\"text\",\"type\":1,\"queryType\":1,\"descText\":\"预制属性\",\"isCollection\":false,\"isHistory\":false,\"infoData\":{\"id\":1,\"remarks\":\"\",\"attributeType\":\"预制属性\",\"attributeName\":\"pay_currency\",\"displayName\":\"支付币种\",\"dataType\":\"文本\",\"number\":0,\"subject\":\"\",\"timeZone\":\"\",\"updateTime\":\"\",\"createUser\":\"\"},\"disabled\":false,\"id\":0,\"index\":0,\"valueType\":1,\"value\":[],\"hasOption\":false},{\"label\":\"系统\",\"labelEn\":\"system\",\"descIcon\":\"\",\"dataType\":\"文本\",\"dataTypeEn\":\"text\",\"type\":1,\"queryType\":1,\"descText\":\"预制属性\",\"isCollection\":false,\"isHistory\":false,\"infoData\":{\"id\":1,\"remarks\":\"\",\"attributeType\":\"预制属性\",\"attributeName\":\"pay_currency\",\"displayName\":\"支付币种\",\"dataType\":\"文本\",\"number\":0,\"subject\":\"\",\"timeZone\":\"\",\"updateTime\":\"\",\"createUser\":\"\"},\"disabled\":false,\"id\":0,\"index\":0,\"valueType\":1,\"value\":[],\"hasOption\":false}]"
+var FirstPaySituationDefaultGrouping = "[{\"label\":\"购买产品(礼包)名称\",\"labelEn\":\"payment_name\",\"descIcon\":\"\",\"dataType\":\"文本\",\"dataTypeEn\":\"text\",\"type\":1,\"queryType\":1,\"descText\":\"预制属性\",\"isCollection\":false,\"isHistory\":false,\"infoData\":{\"id\":1,\"remarks\":\"\",\"attributeType\":\"预制属性\",\"attributeName\":\"pay_currency\",\"displayName\":\"支付币种\",\"dataType\":\"文本\",\"number\":0,\"subject\":\"\",\"timeZone\":\"\",\"updateTime\":\"\",\"createUser\":\"\"},\"disabled\":false,\"id\":0,\"index\":0,\"valueType\":1,\"value\":[],\"hasOption\":false}]"
+var AccumulatedRankingDefaultGrouping = "[{\"label\":\"账号ID\",\"labelEn\":\"uid\",\"descIcon\":\"icon-wenben\",\"dataType\":\"文本\",\"dataTypeEn\":\"text\",\"type\":1,\"descText\":\"预制属性\",\"isCollection\":false,\"isHistory\":false,\"infoData\":{\"id\":32,\"remarks\":\"\",\"attributeType\":\"预制属性\",\"attributeName\":\"uid\",\"displayName\":\"账号ID\",\"dataType\":\"文本\",\"number\":0,\"subject\":\"\",\"timeZone\":\"\",\"updateTime\":\"\",\"createUser\":\"\",\"labelId\":\"32\"},\"id\":0,\"index\":0,\"valueType\":1,\"value\":[],\"hasOption\":false}]"
+var LtvDefaultGrouping = "[{\"dataType\":\"文本\",\"dataTypeEn\":\"text\",\"descIcon\":\"icon-wenben\",\"descText\":\"预制属性\",\"hasOption\":false,\"id\":0,\"index\":0,\"infoData\":{\"attributeName\":\"platform\",\"attributeType\":\"预制属性\",\"createUser\":\"\",\"dataType\":\"文本\",\"displayName\":\"登录方式\",\"id\":24,\"labelId\":\"24\",\"number\":0,\"remarks\":\"\",\"subject\":\"\",\"timeZone\":\"\",\"updateTime\":\"\"},\"isCollection\":false,\"isHistory\":false,\"label\":\"注册渠道\",\"labelEn\":\"platform\",\"type\":1,\"value\":[],\"valueType\":1}]"
+var AdjustDefaultGrouping = "[{\"label\":\"操作系统\",\"labelEn\":\"system\",\"descIcon\":\"icon-wenben\",\"dataType\":\"文本\",\"dataTypeEn\":\"text\",\"type\":1,\"descText\":\"预制属性\",\"isCollection\":false,\"isHistory\":false,\"infoData\":{\"id\":26,\"remarks\":\"\",\"attributeType\":\"预制属性\",\"attributeName\":\"system\",\"displayName\":\"操作系统\",\"dataType\":\"文本\",\"dataTypeEn\":\"text\",\"number\":0,\"subject\":\"\",\"timeZone\":\"\",\"updateTime\":\"\",\"createUser\":\"\",\"labelId\":\"26\"},\"id\":0,\"index\":0,\"valueType\":1,\"value\":[],\"hasOption\":false}]"
+var FirebaseDefaultGrouping = "[{\"label\":\"操作系统\",\"labelEn\":\"system\",\"descIcon\":\"icon-wenben\",\"dataType\":\"文本\",\"dataTypeEn\":\"text\",\"type\":1,\"descText\":\"预制属性\",\"isCollection\":false,\"isHistory\":false,\"infoData\":{\"id\":26,\"remarks\":\"\",\"attributeType\":\"预制属性\",\"attributeName\":\"system\",\"displayName\":\"操作系统\",\"dataType\":\"文本\",\"dataTypeEn\":\"text\",\"number\":0,\"subject\":\"\",\"timeZone\":\"\",\"updateTime\":\"\",\"createUser\":\"\",\"labelId\":\"26\"},\"id\":0,\"index\":0,\"valueType\":1,\"value\":[],\"hasOption\":false}]"
+var ActiveUserChannelGrouping = "[{\"dataType\":\"文本\",\"dataTypeEn\":\"text\",\"descIcon\":\"icon-wenben\",\"descText\":\"预制属性\",\"hasOption\":false,\"id\":0,\"index\":0,\"infoData\":{\"attributeName\":\"platform\",\"attributeType\":\"预制属性\",\"createUser\":\"\",\"dataType\":\"文本\",\"displayName\":\"登录方式\",\"id\":24,\"labelId\":\"24\",\"number\":0,\"remarks\":\"\",\"subject\":\"\",\"timeZone\":\"\",\"updateTime\":\"\"},\"isCollection\":false,\"isHistory\":false,\"label\":\"登录方式\",\"labelEn\":\"platform\",\"type\":1,\"value\":[],\"valueType\":1}]"
+
+var FirebaseDefaultCondition = "{\"relation\":\"\",\"list\":[{\"relation\":\"且\",\"list\":[{\"condition\":{\"label\":\"注册渠道\",\"labelEn\":\"platform\",\"descIcon\":\"icon-wenben\",\"dataType\":\"文本\",\"dataTypeEn\":\"text\",\"type\":1,\"descText\":\"预制属性\",\"isCollection\":false,\"isHistory\":false,\"infoData\":{\"id\":24,\"remarks\":\"\",\"attributeType\":\"预制属性\",\"attributeName\":\"platform\",\"displayName\":\"注册渠道\",\"dataType\":\"文本\",\"number\":0,\"subject\":\"\",\"timeZone\":\"\",\"updateTime\":\"\",\"createUser\":\"\",\"labelId\":\"24\"}},\"filter\":{\"icon\":\"icon-dengyu1\",\"label\":\"等于\",\"filter\":\"=\",\"info\":\"\",\"desc\":\"等于：属性值等于任一设定值\",\"edition\":1,\"date\":\"\",\"value\":\"Facebook\"}}]}]}"
+
+type ExportHelper struct {
+	GameId        string
+	ByTime        string
+	StartDate     string
+	EndDate       string
+	Condition     string
+	Grouping      string
+	Modular       string
+	Panel         string
+	Filename      string
+	UserId        int
+	RetainedCount int
+	Dimension     string
+}
+
+func GetExportData(result ResultExplore) (returnDataList [][]string) {
+	if len(result.UnionGroups) > 100 {
+		result.UnionGroups = result.UnionGroups[0:100]
+	}
+	var titleList []string
+	var dataList [][]string
+	// 标题
+	titleList = append(titleList, "日期")
+	titleList = append(titleList, result.GroupLabel...)
+	titleList = append(titleList, result.Indicators...)
+
+	yList := result.Y.([]map[string][]ResultExploreYList)
+	// 数据
+	for dateKey, dateItem := range result.X {
+		if len(result.UnionGroups) == 0 {
+			result.UnionGroups = append(result.UnionGroups, []string{"总体"})
+		}
+		for groupKey, groupItem := range result.UnionGroups {
+			tempDataList := make([]string, 0)
+			tempDataList = append(tempDataList, dateItem)
+			for _, group := range groupItem {
+				if group != "总体" {
+					tempDataList = append(tempDataList, group)
+				}
+			}
+			for key, IndicatorsValue := range result.Indicators {
+				// 某列【注册用户数】
+				for _, yItem := range yList[key] {
+					tempValue := yItem[groupKey].Values[dateKey]
+					if gslice.ContainString(PercentColumnArr, IndicatorsValue) && (tempValue != "" || tempValue != "0" || tempValue != "0.00") {
+						tempString, _ := decimal.NewFromString(cast.ToString(cast.ToFloat64(tempValue) * 100))
+						if  !tempString.IsZero(){
+							tempValue = tempString.StringFixed(2) + "%"
+						}
+					}
+					tempDataList = append(tempDataList, tempValue)
+				}
+			}
+			dataList = append(dataList, tempDataList)
+		}
+
+	}
+	returnDataList = append(returnDataList, titleList)
+	returnDataList = append(returnDataList, dataList...)
+	return
+}
+func GetExportDataLtv(result ResultExplore) (returnDataList [][]string) {
+	if len(result.UnionGroups) > 100 {
+		result.UnionGroups = result.UnionGroups[0:100]
+	}
+	var titleList []string
+	var dataList [][]string
+	// 标题
+	titleList = append(titleList, "日期")
+	titleList = append(titleList, result.GroupLabel...)
+	titleList = append(titleList, "注册用户数")
+	for key, _ := range result.Indicators[1:] {
+		titleList = append(titleList, "第"+cast.ToString(key)+"天充值")
+		titleList = append(titleList, "LTV"+cast.ToString(key))
+	}
+
+	yList := result.Y.([][]map[string][]ResultExploreYList)
+
+	for _, itemIndex := range yList[0] {
+		for itemKey, itemValue := range itemIndex {
+			for _, value := range itemValue {
+				tempDataList := make([]string, 0)
+				// 日期
+				tempDataList = append(tempDataList, itemKey)
+
+				// 分组项
+				for _, group := range value.GroupCols {
+					if group != "总体" {
+						tempDataList = append(tempDataList, group)
+					} else {
+						for i := 0; i < len(result.GroupLabel); i++ {
+							tempDataList = append(tempDataList, "总体")
+						}
+					}
+				}
+				// 注册用户数
+				tempDataList = append(tempDataList, value.Values[0])
+
+				for key, _ := range result.Indicators[1:] {
+					// 充值金额
+					tempDataList = append(tempDataList, value.ExtendValues[key+1])
+					// ltv
+					tempLtv := value.Values[key+1]
+					if tempLtv == "" {
+						tempLtv = "0"
+					}
+					tempDataList = append(tempDataList, tempLtv)
+				}
+				dataList = append(dataList, tempDataList)
+			}
+		}
+	}
+
+	returnDataList = append(returnDataList, titleList)
+	returnDataList = append(returnDataList, dataList...)
+	return
+}
+
+func GetExportDataRetention(result ResultExplore, indexList []string) (returnDataList [][]string) {
+	if len(result.UnionGroups) > 100 {
+		result.UnionGroups = result.UnionGroups[0:100]
+	}
+	var titleList []string
+	var dataList [][]string
+	// 标题
+	titleList = append(titleList, "日期")
+	titleList = append(titleList, result.GroupLabel...)
+
+	titleList = append(titleList, "指标")
+	titleList = append(titleList, result.Indicators...)
+
+	yList := result.Y.([][]map[string][]ResultExploreYList)
+
+	for _, itemIndex := range yList[0] {
+		for itemKey, itemValue := range itemIndex {
+			for _, value := range itemValue {
+				for indexKey, indexName := range indexList {
+					tempDataList := make([]string, 0)
+					tempDataList = append(tempDataList, itemKey)
+					for _, group := range value.GroupCols {
+						if group != "总体" {
+							tempDataList = append(tempDataList, group)
+						} else {
+							for i := 0; i < len(result.GroupLabel); i++ {
+								tempDataList = append(tempDataList, "")
+							}
+						}
+					}
+					if indexName == "" {
+						tempDataList = append(tempDataList, value.Values...)
+					} else {
+						tempDataList = append(tempDataList, indexName)
+						if indexKey == 0 {
+							tempDataList = append(tempDataList, value.Values...)
+						} else if indexKey == 1 {
+							// 添加%
+							for _, percentValue := range value.PercentValues {
+								tempPercentValue := percentValue + "%"
+								if percentValue == "-" {
+									tempPercentValue = "-"
+								}
+								tempDataList = append(tempDataList, tempPercentValue)
+							}
+						} else if indexKey == 2 && value.OtherValues != nil {
+							// ltv
+							tempDataList = append(tempDataList, value.OtherValues...)
+						}
+
+					}
+					dataList = append(dataList, tempDataList)
+				}
+			}
+		}
+	}
+
+	returnDataList = append(returnDataList, titleList)
+	returnDataList = append(returnDataList, dataList...)
+	return
+}
+func GetExportDataGroup(result ResultExplore, otherList []string) (returnDataList [][]string) {
+	if len(result.UnionGroups) > 100 {
+		result.UnionGroups = result.UnionGroups[0:100]
+	}
+	var titleList []string
+	var dataList [][]string
+	// 标题
+	titleList = append(titleList, "日期")
+	titleList = append(titleList, otherList...)
+	titleList = append(titleList, result.GroupLabel...)
+
+	titleList = append(titleList, result.Indicators...)
+
+	yList := result.Y.([]map[string][]ResultExploreYList)
+
+	for _, itemIndex := range yList {
+		for itemKey, itemValue := range itemIndex {
+			for _, value := range itemValue {
+				tempDataList := make([]string, 0)
+				tempDataList = append(tempDataList, itemKey)
+
+				for _, group := range value.GroupCols {
+					if group != "总体" {
+						tempDataList = append(tempDataList, group)
+					} else {
+						for i := 0; i < len(result.GroupLabel); i++ {
+							tempDataList = append(tempDataList, "")
+						}
+					}
+				}
+				tempDataList = append(tempDataList, value.Values...)
+
+				dataList = append(dataList, tempDataList)
+
+			}
+		}
+	}
+
+	returnDataList = append(returnDataList, titleList)
+	returnDataList = append(returnDataList, dataList...)
+	return
+}
+
+// 默认分组
+func getDefaultCondition(exportHelper ExportHelper) (condition string) {
+	if exportHelper.Modular == "firebase" {
+		return FirebaseDefaultCondition
+	}
+	return
+}
+
+// 默认分组
+func getDefaultGrouping(exportHelper ExportHelper) (grouping string) {
+	if exportHelper.Modular == "paymentSituation" {
+		return PaymentSituationDefaultGrouping
+	}
+	// 渠道新增用户数
+	if exportHelper.Modular == "channelRegister" {
+		return ChannelRegisterDefaultGrouping
+	}
+	// 首充购买情况
+	if exportHelper.Modular == "firstPaySituation" {
+		return FirstPaySituationDefaultGrouping
+	}
+
+	// 累充排名
+	if exportHelper.Modular == "accumulatedRanking" {
+		return AccumulatedRankingDefaultGrouping
+	}
+	// ltv
+	if exportHelper.Modular == "ltv" {
+		return LtvDefaultGrouping
+	}
+	// adjust
+	if exportHelper.Modular == "adjust" {
+		return AdjustDefaultGrouping
+	}
+	// firebase
+	if exportHelper.Modular == "firebase" {
+		return FirebaseDefaultGrouping
+	}
+	// firebase
+	if exportHelper.Modular == "activeUserChannel" {
+		return ActiveUserChannelGrouping
+	}
+	return
+}
+
+// 默认时间维度
+func getDefaultByTime(exportHelper ExportHelper) (byTime string) {
+	// 周活跃用户数
+	if exportHelper.Modular == "weekActiveUser" {
+		return "byWeek"
+	}
+	// 月活跃用户数
+	if exportHelper.Modular == "monthActiveUser" {
+		return "byMonth"
+	}
+	// 当月充值总额
+	if exportHelper.Modular == "thisMonthRecharge" {
+		return "byMonth"
+	}
+	// 周登录天数分布
+	if exportHelper.Modular == "weekLogin" {
+		return "byWeek"
+	}
+	return "byDay"
+}
+
+// 默认开始时间结束时间
+func getDefaultStartEndDate(exportHelper ExportHelper) (startDate, endDate string) {
+
+	if gslice.ContainString([]string{
+		"register",          // 注册用户数
+		"active",            // 活跃用户数
+		"thisMonthRecharge", // 当月充值总额
+		"rechargeTotal",     // 充值总额
+
+		"activeUser",      // 活跃用户数
+		"oldActiveUser",   // 活跃老玩家数
+		"weekActiveUser",  // 周活跃用户数
+		"monthActiveUser", // 月活跃用户数
+	}, exportHelper.Modular) {
+		return exportHelper.EndDate, exportHelper.EndDate
+	}
+
+	return exportHelper.StartDate, exportHelper.EndDate
+}
+func (s *PanelService) ExportCsv(ctx *gin.Context, exportHelper ExportHelper) (filename string, err error) {
+	exportHelper.StartDate, exportHelper.EndDate = getDefaultStartEndDate(exportHelper)
+	exportHelper.Grouping = getDefaultGrouping(exportHelper)
+	exportHelper.Condition = getDefaultCondition(exportHelper)
+	exportHelper.ByTime = getDefaultByTime(exportHelper)
+
+	filename = GetCsvFilename(exportHelper.Dimension, exportHelper.Filename, exportHelper.StartDate, exportHelper.EndDate)
+	// 文件是否存在
+	if b, _ := FileExists(filename); b == true {
+		return
+	}
+	var result ResultExplore
+	if exportHelper.Panel == "core" {
+		explore := &RequestCorePanelExplore{
+			GameId:        exportHelper.GameId,
+			ByTime:        exportHelper.ByTime,
+			StartDate:     exportHelper.StartDate,
+			EndDate:       exportHelper.EndDate,
+			Condition:     exportHelper.Condition,
+			Grouping:      exportHelper.Grouping,
+			Modular:       exportHelper.Modular,
+			UserId:        exportHelper.UserId,
+			RetainedCount: exportHelper.RetainedCount,
+			Dimension:     exportHelper.Dimension,
+		}
+		result, err = s.GetColePanelExploreData(ctx, explore)
+	}
+	if exportHelper.Panel == "pay" {
+		explore := &RequestPayPanelExplore{
+			GameId:        exportHelper.GameId,
+			ByTime:        exportHelper.ByTime,
+			StartDate:     exportHelper.StartDate,
+			EndDate:       exportHelper.EndDate,
+			Condition:     exportHelper.Condition,
+			Grouping:      exportHelper.Grouping,
+			Modular:       exportHelper.Modular,
+			UserId:        exportHelper.UserId,
+			RetainedCount: exportHelper.RetainedCount,
+			Dimension:     exportHelper.Dimension,
+		}
+		result, err = s.GetPayPanelExploreData(ctx, explore)
+	}
+	if exportHelper.Panel == "active" {
+		explore := &RequestActivePanelExplore{
+			GameId:        exportHelper.GameId,
+			ByTime:        exportHelper.ByTime,
+			StartDate:     exportHelper.StartDate,
+			EndDate:       exportHelper.EndDate,
+			Condition:     exportHelper.Condition,
+			Grouping:      exportHelper.Grouping,
+			Modular:       exportHelper.Modular,
+			UserId:        exportHelper.UserId,
+			RetainedCount: exportHelper.RetainedCount,
+			Dimension:     exportHelper.Dimension,
+		}
+		result, err = s.GetActivePanelExploreData(ctx, explore)
+	}
+	if err != nil {
+		return
+	}
+	var dataList [][]string
+	if gslice.ContainString([]string{"ltv"}, exportHelper.Modular) {
+		dataList = GetExportDataLtv(result)
+	} else if gslice.ContainString([]string{"retained"}, exportHelper.Modular) {
+		indexList := []string{"留存人数", "留存率"}
+		dataList = GetExportDataRetention(result, indexList)
+	} else if gslice.ContainString([]string{"weekLogin", "accumulateDistribution", "onlineDuration"}, exportHelper.Modular) {
+		var otherList []string
+		switch exportHelper.Modular {
+		case "weekLogin":
+			otherList = []string{"全部用户"}
+			break
+		case "accumulateDistribution":
+			otherList = []string{"全部用户"}
+			break
+		case "onlineDuration":
+			otherList = []string{"全部用户"}
+			break
+		default:
+			break
+		}
+		dataList = GetExportDataGroup(result, otherList)
+	} else {
+		dataList = GetExportData(result)
+	}
+	CreateCsvFile(filename, dataList)
+	return
+}
+func FileExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
+// 格式/2023-01/维度/2023-01-02-13/注册用户注册数_20230101_20230102.csv
+func GetCsvFilename(dimension, modular string, startDate, endDate string) (filename string) {
+	return ExportDir + time.Now().Format("2006-01") + "/" + dimension + "/" + time.Now().Format("2006-01-02-15") + "/" + modular + "_" + strings.ReplaceAll(startDate, "-", "") + "_" + strings.ReplaceAll(endDate, "-", "") + ".csv"
+}
+
+func CreateCsvFile(filename string, dataList [][]string) (err error) {
+	// 创建目录
+	if err = PathIsExistOrCreate(filepath.Dir(filename)); err != nil {
+		return
+	}
+	// 存在删除
+	if b, _ := FileExists(filename); b == true {
+		err = os.Remove(filename)
+		return err
+	}
+	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0766)
+	if err != nil {
+		return
+	}
+	if _, err = file.WriteString("\xEF\xBB\xBF"); err != nil {
+		return
+	}
+	csvWriter := csv.NewWriter(file)
+	for _, value := range dataList {
+		csvWriter.Write(value)
+	}
+	csvWriter.Flush()
+	defer file.Close()
+	return
+}
+
+// 删除规则 删除上5个月的所有文件
+func RemoveCsvFile() {
+	for i := 1; i <= 5; i++ {
+		dirname := carbon.Now().SubMonthsNoOverflow(i).Format("Y-m")
+		os.RemoveAll(ExportDir + dirname)
+	}
+}
+
+func PathIsExistOrCreate(path string) error {
+	if isExist(path) {
+		return nil
+	}
+	err := os.MkdirAll(path, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func isExist(path string) bool {
+	_, err := os.Stat(path)
+	if err != nil {
+		if os.IsExist(err) {
+			return true
+		}
+		if os.IsNotExist(err) {
+			return false
+		}
+		return false
+	}
+	return true
+}
+
+func CreateZip(zipName string, fileList []string) (zipFilename string, err error) {
+	zipFilePath := ExportDir + "zip/"
+	err = PathIsExistOrCreate(zipFilePath)
+	if err != nil {
+		return "", errors.New("目录创建失败")
+	}
+	zipFilename = zipFilePath + zipName
+	zipFile, err := os.Create(zipFilename)
+	if err != nil {
+		return
+	}
+	defer zipFile.Close()
+	zipWriter := zip.NewWriter(zipFile)
+	for _, filename := range fileList {
+		fr, err1 := os.Open(filename)
+		if err1 != nil {
+			return "", err1
+		}
+		_, baseFilename := filepath.Split(filename)
+		writer, err2 := zipWriter.Create(baseFilename)
+		if err2 != nil {
+			return "", errors.New("文件创建失败")
+		}
+		if _, err3 := io.Copy(writer, fr); err3 != nil {
+			return "", errors.New("文件写入失败")
+		}
+	}
+	zipWriter.Flush()
+	zipWriter.Close()
+	return
+}
+
+type FileTask struct {
+	TaskId   string  `json:"taskId" `
+	Filename string  `json:"filename" `
+	Rate     float64 `json:"rate" `
+}
+
+type FileTaskHelper struct {
+	Db            *gorm.DB
+	RedisDb       *redis.Client
+	CkDb          *gorm.DB
+	Log           contract.Log
+	Ctx           *gin.Context
+	Config        contract.Config
+	GameId        string
+	UserId        int
+	Filename      string
+	UserIdListSql string
+	Modular       string
+	TaskId        string
+	Dimension     string
+}
+
+// 创建文件任务
+
+const TaskPageSize = 1000
+const TaskCacheKey = "download_key"
+
+func GetCacheKey() (cacheKey string) {
+	return TaskCacheKey + "_" + time.Now().Format("2006-01")
+}
+
+// 文件生成
+func FileBuild(fileTaskHelper *FileTaskHelper) (fileTask FileTask, err error) {
+	if fileTaskHelper.TaskId != "" {
+		return FileBuildProgress(fileTaskHelper.TaskId, fileTaskHelper.RedisDb)
+	}
+	dimension := fileTaskHelper.Dimension
+	if dimension == "" {
+		dimension = "uid"
+	}
+	// 维度替换
+	fileTaskHelper.UserIdListSql = strings.ReplaceAll(fileTaskHelper.UserIdListSql, "{dimension}", dimension)
+
+	taskId := public.UniqueId()
+	filename := ExportDir + time.Now().Format("2006-01/") + taskId + "/" + fileTaskHelper.Filename
+	// 创建目录
+	if err = PathIsExistOrCreate(filepath.Dir(filename)); err != nil {
+		return
+	}
+	// 存在删除
+	if b, _ := FileExists(filename); b == true {
+		if err = os.Remove(filename); err != nil {
+			return
+		}
+	}
+	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0766)
+	if err != nil {
+		return
+	}
+	if _, err = file.WriteString("\xEF\xBB\xBF"); err != nil {
+		return
+	}
+	// 创建文件流
+	csvWriter := csv.NewWriter(file)
+
+	// 获取表头
+	var headerList, fieldList []string
+	var count int64
+	if fileTaskHelper.Modular == "panel_user_list" {
+		headerList, fieldList, err = GetUserListHeaderList(fileTaskHelper.Ctx, cast.ToString(fileTaskHelper.UserId), fileTaskHelper.GameId, fileTaskHelper.Db, fileTaskHelper.Log, fileTaskHelper.Config)
+		if err != nil {
+			fileTaskHelper.Log.Error(fileTaskHelper.Ctx, "GetUserListHeaderList 执行出错", map[string]interface{}{"err": err})
+			return
+		}
+		count, err = GetUserListCount(fileTaskHelper.GameId, fileTaskHelper.UserIdListSql, dimension, fileTaskHelper.CkDb)
+		if err != nil {
+			fileTaskHelper.Log.Error(fileTaskHelper.Ctx, "GetUserListCount 执行出错", map[string]interface{}{"err": err})
+			return
+		}
+	}
+
+	fileTask.Filename = filename
+	fileTask.Rate = 0
+	fileTask.TaskId = taskId
+	csvWriter.Write(headerList)
+	csvWriter.Flush()
+
+	if count <= 0 {
+		fileTask.Rate = 100
+		bytes, _ := json.Marshal(&fileTask)
+		err = fileTaskHelper.RedisDb.HSet(fileTaskHelper.Ctx, GetCacheKey(), taskId, bytes).Err()
+		if err != nil {
+			fileTaskHelper.Log.Error(fileTaskHelper.Ctx, "FileBuild err1", map[string]interface{}{"err": err})
+			return
+		}
+
+	} else {
+		go func() {
+			// 分页读取
+			pageTotal := math.Ceil(float64(count) / float64(TaskPageSize))
+			for i := 1; i <= int(pageTotal); i++ {
+				var dataAllList [][]string
+				if fileTaskHelper.Modular == "panel_user_list" {
+					dataAllList, err = GetUserListByPage(fileTaskHelper.GameId, dimension, (i-1)*TaskPageSize, TaskPageSize, fileTaskHelper.UserIdListSql, fileTaskHelper.CkDb, fieldList)
+				}
+				if err != nil {
+					fileTaskHelper.Log.Error(fileTaskHelper.Ctx, "执行出错", map[string]interface{}{"err": err})
+					return
+				}
+				csvWriter.WriteAll(dataAllList)
+				rate := fileTask.Rate + math.Ceil(100/cast.ToFloat64(pageTotal))
+				if rate > 100 {
+					rate = 100
+				}
+				fileTask.Rate = rate
+				bytes, _ := json.Marshal(&fileTask)
+				err = fileTaskHelper.RedisDb.HSet(fileTaskHelper.Ctx, GetCacheKey(), taskId, bytes).Err();
+				if err != nil {
+					fileTaskHelper.Log.Error(fileTaskHelper.Ctx, "FileBuild err", map[string]interface{}{"err": err})
+					return
+				}
+			}
+			defer file.Close()
+		}()
+	}
+	return
+}
+
+// 文件生成进度
+func FileBuildProgress(taskId string, redisDb *redis.Client) (fileTask FileTask, err error) {
+	res := redisDb.HGet(context.Background(), GetCacheKey(), taskId)
+	if res.Err() != nil {
+		return
+	}
+	err = json.Unmarshal([]byte(res.Val()), &fileTask)
+	defer removeCache(redisDb)
+	return
+}
+
+// 删除缓存
+func removeCache(redisDb *redis.Client) {
+	for i := 1; i <= 5; i++ {
+		prefix := carbon.Now().SubMonthsNoOverflow(i).Format("Y-m")
+		redisDb.Del(context.Background(), TaskCacheKey+"_"+prefix)
+	}
+}
