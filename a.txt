@@ -1,4 +1,57 @@
 package panel
+package panel
+
+import (
+	"git.code.tencent.com/liuzhenqiang/ghgame_framework/util/gstring"
+)
+
+var PayUserCountSql = []byte(`
+	SELECT 
+		{sqlField}
+		,count(distinct({dimension})) as number
+	FROM
+		{CKTable} p 
+		{sqlJoin}
+	WHERE
+		{sqlWhere}
+		and event='deliver_goods'
+	GROUP BY {sqlGroup}
+	ORDER BY {sqlGroup}
+`)
+
+var PayUserCountColumnIndex = "pay_user_count"
+var PayUserCountColumnName = "付费玩家数"
+
+// 探索-付费玩家数
+func ExplorePayUserCount(exploreHelper *ExploreHelper) (result ResultExplore, err error) {
+
+	// 初始化
+	result = ExploreInitData(exploreHelper)
+
+	// 构建sql
+	exploreHelper.Sql = gstring.BytesToString(PayUserCountSql)
+	ExploreBuildSql(exploreHelper)
+
+	// 执行sql
+	ExploreRunSql(exploreHelper)
+
+	// 构建数据
+	result.Y = ExploreBuildOneColumnData(PayUserCountColumnName, exploreHelper)
+
+	// 列指标
+	result.ColumnIndex = []string{PayUserCountColumnIndex}
+
+	// 列名称
+	result.Indicators = ExploreBuildOneIndicators(PayUserCountColumnName, exploreHelper)
+
+	return
+}
+
+// 付费玩家数
+func GetPayUserIdListSql(userHelper UserListHelper) (sql string) {
+	return "SELECT DISTINCT({dimension}) FROM " + GetCkTableByGameId(userHelper.GameId) + " p " + userHelper.BuildJoin +
+		" WHERE event='deliver_goods' " + userHelper.BuildWhere
+}
 
 import (
 	"archive/zip"
