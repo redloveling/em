@@ -2,6 +2,255 @@ package panel
 package panel
 package panel
 package panel
+package panel
+
+import (
+	"strings"
+
+	"git.code.tencent.com/liuzhenqiang/ghgame_framework/util/gslice"
+	"git.code.tencent.com/liuzhenqiang/ghgame_framework/util/gstring"
+	"github.com/spf13/cast"
+)
+
+var RetainedSql = []byte(`
+SELECT
+	
+	{selectFdate}		
+	{RetainedCase}
+	{outGroup}
+FROM
+	(
+	SELECT
+		
+		fdate,
+		{dimension},
+		{RetainedRetention}
+		{outGroup}
+	FROM
+		(
+		SELECT
+			{fdate}
+			account_day, 
+			event,
+			{dimension}
+			{outGroup}
+		FROM
+			(
+			SELECT
+				{sqlField}
+				,{dimension}
+				,event
+				,{accountDay} account_day
+			FROM
+				{CKTable} p
+				{sqlJoin}
+			WHERE
+				{sqlWhere}
+				and event in ('register','login')
+			)
+)
+	GROUP BY
+		fdate,
+		{dimension} 
+		{outGroup}
+  )
+GROUP BY
+	dates {outGroup}
+ORDER BY
+	dates
+`)
+
+var RetainedColumnIndex = ""
+var RetainedColumnName = "留存"
+
+// 探索--留存
+func ExploreRetained(exploreHelper *ExploreHelper) (result ResultExplore, err error) {
+	if gslice.ContainString([]string{"byQuarter", "byYear"}, exploreHelper.ByTime) {
+		return
+	}
+
+	// 初始化
+	result = ExploreInitData(exploreHelper)
+
+	zList := make([]string, 0)
+	RetainedColumnIndex := make([]string, 0)
+	zList, sqlFieldList, RetainedColumnIndex := ExploreRetainedBuildSql(exploreHelper)
+	// 执行sql
+	if err = ExploreRunSql(exploreHelper); err != nil {
+		return
+	}
+	// 留存
+	RetainedList := ExploreBuildMoreColumnData(sqlFieldList, exploreHelper)
+	// 构建流失 case_total-case_0
+	lossDataList := make([]map[string]interface{}, 0)
+	for _, value := range exploreHelper.ResultList {
+		tempData := value
+		for i := 0; i <= exploreHelper.RetainedCount; i++ {
+			tempData["case_"+cast.ToString(i)] = cast.ToString(cast.ToInt(value["case_total"]) - cast.ToInt(value["case_"+cast.ToString(i)]))
+		}
+		lossDataList = append(lossDataList, tempData)
+	}
+
+	exploreHelper.ResultList = lossDataList
+	lostList := ExploreBuildMoreColumnData(sqlFieldList, exploreHelper)
+	resultYList := make([][]map[string][]ResultExploreYList, 0)
+	resultYList = append(resultYList, RetainedList)
+	resultYList = append(resultYList, lostList)
+	// 构建数据
+	result.Y = resultYList
+	result.ColumnIndex = RetainedColumnIndex
+	result.Indicators = zList
+	result.Z = result.Indicators
+
+	return
+}
+func ExploreRetainedBuildSql(exploreHelper *ExploreHelper) (zList, sqlFieldList, RetainedColumnIndex []string) {
+	RetainedSql := gstring.BytesToString(RetainedSql)
+	RetainedCase := "sum(r[" + cast.ToString(1) + "]) case_total,"
+	RetainedRetention := "retention(account_day = fdate and event = 'register'"
+	RetainedColumnIndex = append(RetainedColumnIndex, "register_user_count")
+	zList = append(zList, "账号注册用户数")
+	for i := 0; i <= exploreHelper.RetainedCount; i++ {
+		columnKey := "case_" + cast.ToString(i)
+		RetainedCase += "sum(r[" + cast.ToString(i+2) + "]) case_" + cast.ToString(i) + ","
+
+		unit := "日"
+		if exploreHelper.ByTime == "byDay" {
+			RetainedRetention += ",account_day = addDays(fdate, " + cast.ToString(i) + ") and event='login'"
+		}
+		if exploreHelper.ByTime == "byWeek" {
+			unit = "周"
+			RetainedRetention += ",account_day = addWeeks(fdate, " + cast.ToString(i) + ") and event='login'"
+		}
+		if exploreHelper.ByTime == "byMonth" {
+			unit = "月"
+			RetainedRetention += ",account_day = addMonths(fdate, " + cast.ToString(i) + ") and event='login'"
+		}
+		if i == 0 {
+			zList = append(zList, "当"+unit)
+		} else {
+			zList = append(zList, "第"+cast.ToString(i)+unit)
+		}
+		sqlFieldList = append(sqlFieldList, columnKey)
+		RetainedColumnIndex = append(RetainedColumnIndex, cast.ToString(i))
+
+	}
+	RetainedRetention += ")as r"
+
+	//
+	addDate := ""
+	accountDay := ""
+	fdate := ""
+	selectFdate := ""
+	if exploreHelper.ByTime == "byDay" {
+		addDate = "addDays"
+		accountDay = "toDate(event_time)"
+		fdate = "arrayJoin(arrayMap(d -> addDays(toDate('{startDate}'), d),range({retainedCountDay})) as arr_ftime) as fdate,"
+		selectFdate = "toString(fdate) as dates,"
+	}
+	if exploreHelper.ByTime == "byWeek" {
+		addDate = "addWeeks"
+		accountDay = "toStartOfWeek(toDate(event_time),1) "
+		fdate = "arrayJoin(arrayMap(d -> addWeeks(toStartOfWeek(toDate('{startDate}'),1), d),range({retainedCountDay})) as arr_ftime) as fdate,"
+		selectFdate = "toString(toYearWeek(fdate,1)) as dates,"
+	}
+	if exploreHelper.ByTime == "byMonth" {
+		addDate = "addMonth"
+		accountDay = "toStartOfMonth(toDate(event_time)) "
+		fdate = "arrayJoin(arrayMap(d -> addMonths(toStartOfMonth(toDate('{startDate}')), d),range({retainedCountDay})) as arr_ftime) as fdate,"
+		selectFdate = "substring(toString(fdate),1,7) as dates,"
+	}
+
+	// 没有dates字段
+	sqlGroup := ""
+	outGroup := ""
+	for _, value := range strings.Split(exploreHelper.SqlGroup, ",")[1:] {
+		sqlGroup += value + ","
+		value := strings.ReplaceAll(value, "p.", "")
+
+		outGroup += "," + value
+
+	}
+	if sqlGroup != "" {
+		sqlGroup = "GROUP BY " + strings.TrimRight(sqlGroup, ",")
+	}
+	retainedCountDay := "toUInt32(dateDiff('day',toDate('{startDate}'),toDate('{endDate}'))+{retainedCount})"
+	RetainedSql = strings.ReplaceAll(RetainedSql, "{selectFdate}", selectFdate)
+	RetainedSql = strings.ReplaceAll(RetainedSql, "{fdate}", fdate)
+	RetainedSql = strings.ReplaceAll(RetainedSql, "{RetainedCase}", strings.TrimRight(RetainedCase, ","))
+	RetainedSql = strings.ReplaceAll(RetainedSql, "{RetainedRetention}", RetainedRetention)
+	RetainedSql = strings.ReplaceAll(RetainedSql, "{retainedCountDay}", retainedCountDay)
+	RetainedSql = strings.ReplaceAll(RetainedSql, "{startDate}", exploreHelper.StartDate)
+	RetainedSql = strings.ReplaceAll(RetainedSql, "{endDate}", exploreHelper.EndDate)
+
+	RetainedSql = strings.ReplaceAll(RetainedSql, "{addDate}", addDate)
+	RetainedCount := exploreHelper.RetainedCount
+	RetainedSql = strings.ReplaceAll(RetainedSql, "{retainedCount}", cast.ToString(RetainedCount+1))
+
+	RetainedSql = strings.ReplaceAll(RetainedSql, "{accountDay}", accountDay)
+	RetainedSql = strings.ReplaceAll(RetainedSql, "{sqlField}", exploreHelper.SqlField)
+	RetainedSql = strings.ReplaceAll(RetainedSql, "{sqlWhere}", exploreHelper.SqlWhere)
+	RetainedSql = strings.ReplaceAll(RetainedSql, "{sqlGroup}", sqlGroup)
+	RetainedSql = strings.ReplaceAll(RetainedSql, "{sqlJoin}", exploreHelper.SqlJoin)
+	RetainedSql = strings.ReplaceAll(RetainedSql, "{outGroup}", outGroup)
+	RetainedSql = strings.ReplaceAll(RetainedSql, "{CKTable}", GetCkTableByGameId(exploreHelper.GameId))
+	exploreHelper.Sql = RetainedSql
+	ExploreBuildSql(exploreHelper)
+	return
+}
+
+var retainedUserListSql = []byte(`
+	SELECT 
+		DISTINCT {dimension}
+	FROM
+	(
+		with
+   		'{currentDate}' as currentDate
+		SELECT
+			{dimension}
+			,retention({accountDay} = currentDate and event = 'register',
+				  {accountDay} = {addDate}(toDate(currentDate),{caseColumn}) and event='login'
+          	) as r
+ 		FROM 
+			{CKTable} p        
+ 			{BuildJoin}
+		WHERE 
+			event in ('login','register') 
+	 	GROUP BY {dimension}
+ 		HAVING r[2]=1
+ 		
+ 	)
+`)
+
+func GetRetainedUserIdListSql(userHelper UserListHelper) (sql string, err error) {
+	if gslice.ContainString([]string{"byQuarter", "byYear"}, userHelper.ByTime) {
+		return
+	}
+	sql = gstring.BytesToString(retainedUserListSql)
+	addDate := ""
+	accountDay := ""
+	if userHelper.ByTime == "byDay" {
+		addDate = "addDays"
+		accountDay = "toDate(event_time)"
+	}
+	if userHelper.ByTime == "byWeek" {
+		addDate = "addWeeks"
+		accountDay = "toStartOfWeek(toDate(event_time),1) "
+	}
+	if userHelper.ByTime == "byMonth" {
+		addDate = "addMonths"
+		accountDay = "toStartOfMonth(toDate(event_time)) "
+		userHelper.SliceDate += "-01"
+	}
+	sql = strings.ReplaceAll(sql, "{currentDate}", userHelper.SliceDate)
+	sql = strings.ReplaceAll(sql, "{addDate}", addDate)
+	sql = strings.ReplaceAll(sql, "{caseColumn}", userHelper.ColumnIndex)
+	sql = strings.ReplaceAll(sql, "{BuildJoin}", userHelper.BuildJoin)
+	sql = strings.ReplaceAll(sql, "{CKTable}", GetCkTableByGameId(userHelper.GameId))
+	sql = strings.ReplaceAll(sql, "{accountDay}", accountDay)
+
+	return
+}
 
 import (
 	"git.code.tencent.com/liuzhenqiang/ghgame_framework/util/gstring"
