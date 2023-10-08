@@ -3,6 +3,387 @@ package panel
 package panel
 package panel
 package panel
+package panel
+
+import (
+	"strings"
+	"wt/econ/api/app/provider/public"
+
+	"git.code.tencent.com/liuzhenqiang/ghgame_framework/util/gslice"
+	"git.code.tencent.com/liuzhenqiang/ghgame_framework/util/gstring"
+	"github.com/spf13/cast"
+)
+
+var LtvBaseData = []byte(`
+	SELECT
+		{fDateList}
+		,account_day
+		,{dimension}
+		,event
+		,pay_price/100 as pay_price
+		{sqlFieldNoDates}
+	FROM
+		(
+		SELECT
+			{sqlField}
+			,pay_price
+			,event
+			,{dimension}
+			,{accountDay} account_day
+		FROM 
+			{CKTable} p
+			{sqlJoin}
+		WHERE  
+			{sqlWhere}
+			and event in {ltvEventList}
+		)	
+`)
+
+var LtvItemDay = []byte(` left join
+	(SELECT
+		{fDate}
+		,sum(pay_amount_{day})  pay_total_{day} 
+		,sum(payList[2])  pay_user_count_{day}
+		{sqlFieldNoDates}
+	FROM
+		(
+		SELECT
+			fdate
+    		,{dimension}
+			,sumIf(pay_price,account_day = {dateWord}(fdate,{day}) and event='deliver_goods')  pay_amount_{day}
+			,retention(account_day = fdate and event='{ltvFirstEvent}',account_day = {dateWord}(fdate,{day}) and event='deliver_goods' ) as payList
+			{sqlFieldNoDates}
+		FROM 
+			baseData
+		GROUP BY {dimension},fdate {sqlFieldNoDates}
+		HAVING payList[2]>0 
+		)
+	GROUP BY fdate {sqlFieldNoDates}
+	ORDER BY fdate) a_{day} 
+`)
+var LtvSqlNew = []byte(`
+	with baseData as ({baseData})
+	SELECT
+         {ltvSelectField}
+		,sum(a.register_user_count) as register_user_count
+		,{payTotalField}	
+		,{payUserCountField}
+		,{ltvField}
+		
+	FROM
+		(
+			select dates {sqlFieldNoDates},count(distinct({dimension})) as register_user_count 
+			
+			from
+				(SELECT 
+					{sqlField}
+					,{dimension}
+				FROM
+					{CKTable} p 
+					{sqlJoin}
+				WHERE
+					{sqlWhere}
+					and event='{ltvFirstEvent}'
+				ORDER BY {dimension} limit 1 by dates,{dimension}
+				)
+			GROUP BY {sqlGroup}
+		 	ORDER BY {sqlGroup}
+		) a
+	
+		{LtvItemDaySql}
+	GROUP BY {sqlOutGroup}
+	ORDER BY {sqlOutGroup}
+`)
+var LtvColumnIndexNew = ""
+var LtvColumnNameNew = "LtvNew"
+
+// 探索-LtvNew  LTV=第0日注册用户在第N日的总收入/第0日的注册用户数
+func ExploreLtvNew(exploreHelper *ExploreHelper) (result ResultExplore, err error) {
+	if gslice.ContainString([]string{"byQuarter", "byYear"}, exploreHelper.ByTime) {
+		return
+	}
+
+	// 初始化
+	result = ExploreInitData(exploreHelper)
+
+	zList, columnIndex := ExploreLtvBuildSqlNew(exploreHelper)
+	// 执行sql
+	if err = ExploreRunSql(exploreHelper); err != nil {
+		return
+	}
+	// 留存
+	RetainedList := ExploreBuildLtvDataNew("retained", zList, exploreHelper)
+	// 构建流失 case_total-case_0
+	lossDataList := make([]map[string]interface{}, 0)
+	for _, value := range exploreHelper.ResultList {
+		tempData := value
+		for i := 0; i <= exploreHelper.RetainedCount; i++ {
+			tempData["case_"+cast.ToString(i)] = cast.ToString(cast.ToInt(value["register_user_count"]) - cast.ToInt(value["retain_"+cast.ToString(i)]))
+		}
+		lossDataList = append(lossDataList, tempData)
+	}
+
+	exploreHelper.ResultList = lossDataList
+	lostList := ExploreBuildLtvDataNew("loss", zList, exploreHelper)
+	resultYList := make([][]map[string][]ResultExploreYList, 0)
+	resultYList = append(resultYList, RetainedList)
+	resultYList = append(resultYList, lostList)
+
+	// 构建数据
+	result.Y = resultYList
+	result.ColumnIndex = columnIndex
+	result.Indicators = zList
+	result.Z = result.Indicators
+
+	return
+}
+
+func ExploreLtvBuildSqlNew(exploreHelper *ExploreHelper) (zList []string, columnIndex []string) {
+	ltvEventList := "('register','deliver_goods')"
+	ltvFirstEvent := "register"
+	if exploreHelper.Dimension == "role_id" {
+		ltvEventList = "('create_role','deliver_goods')"
+		ltvFirstEvent = "create_role"
+	}
+	zList = append(zList, "账号注册用户数")
+	unit := "日"
+	dateWord := "addDays"
+	payAmountList := ""
+	retainedList := "retention(account_day = fdate and event='register'"
+	retainField := ""
+	payTotalField := ""
+	ltvField := ""
+	payUserList := "retention(account_day = fdate and event='register'"
+	payUserCountField := ""
+	if exploreHelper.ByTime == "byWeek" {
+		unit = "周"
+		dateWord = "addWeeks"
+	}
+	if exploreHelper.ByTime == "byMonth" {
+		unit = "月"
+		dateWord = "addMonths"
+	}
+	zList = append(zList, "当"+unit)
+	columnIndex = append(columnIndex, "register_user_count")
+	abJoinOn := "toString(a.dates)=toString(a_{day}.dates) "
+	ltvSelectField := "a.dates as dates"
+	for _, value := range exploreHelper.GroupField {
+		tempField := strings.ReplaceAll(value, ".", "_")
+		abJoinOn += " and a." + tempField + " = a_{day}." + tempField
+		ltvSelectField += ",a." + tempField + " " + tempField
+	}
+	abJoinOn = strings.TrimRight(abJoinOn, "and")
+	ltvSql := gstring.BytesToString(LtvSqlNew)
+	itemSql := ""
+	// exploreHelper.RetainedCount = 1
+	for i := 0; i <= exploreHelper.RetainedCount; i++ {
+		LtvItemDaySql := gstring.BytesToString(LtvItemDay)
+		zList = append(zList, "第"+cast.ToString(i+1)+unit)
+		columnIndex = append(columnIndex, "")
+		LtvItemDaySql += " on " + abJoinOn
+		LtvItemDaySql = strings.ReplaceAll(LtvItemDaySql, "{day}", cast.ToString(i))
+		itemSql += LtvItemDaySql
+
+		payAmountList += ",sumIf(pay_price,account_day = {dateWord}(fdate," + cast.ToString(i) + ") and event='deliver_goods')  pay_amount_" + cast.ToString(i)
+		retainedList += ",account_day = {dateWord}(fdate," + cast.ToString(i) + ")"
+		payUserList += ",account_day = {dateWord}(fdate," + cast.ToString(i) + ") and event='deliver_goods'"
+
+		retainField += ",sum(retainList[" + cast.ToString(i+1) + "])  retain_" + cast.ToString(i)
+		payTotalField += "sum(pay_total_" + cast.ToString(i) + ")  pay_total_" + cast.ToString(i) + ","
+		ltvField += ",IF(register_user_count=0 or pay_user_count_" + cast.ToString(i) + "=0,0,IF(isNaN(pay_total_" + cast.ToString(i) + "/register_user_count as tt_" + cast.ToString(i) + "),0,IF(isInfinite(tt_" + cast.ToString(i) + "),1,round(tt_" + cast.ToString(i) + ",2)) )) ltv_" + cast.ToString(i)
+		payUserCountField += "sum(pay_user_count_" + cast.ToString(i) + ")  pay_user_count_" + cast.ToString(i) + ","
+
+	}
+	ltvSql = strings.ReplaceAll(ltvSql, "{LtvItemDaySql}", itemSql)
+	ltvSql = strings.ReplaceAll(ltvSql, "{baseData}", gstring.BytesToString(LtvBaseData))
+	zList = zList[0 : len(zList)-1]
+	retainedList += ") as retainList"
+	payUserList += ") as payList"
+	retainedCountDay := "toUInt32(dateDiff('day',toDate('{startDate}'),toDate('{endDate}'))+" + cast.ToString(exploreHelper.RetainedCount) + ")"
+
+	ltvSql = strings.ReplaceAll(ltvSql, "{payAmountList}", strings.TrimLeft(payAmountList, ","))
+	ltvSql = strings.ReplaceAll(ltvSql, "{retainedList}", strings.TrimLeft(retainedList, ","))
+	ltvSql = strings.ReplaceAll(ltvSql, "{payUserList}", strings.TrimLeft(payUserList, ","))
+	ltvSql = strings.ReplaceAll(ltvSql, "{payTotalField}", strings.TrimRight(payTotalField, ","))
+	ltvSql = strings.ReplaceAll(ltvSql, "{payUserCountField}", strings.TrimRight(payUserCountField, ","))
+	ltvSql = strings.ReplaceAll(ltvSql, "{retainField}", strings.TrimLeft(retainField, ","))
+	ltvSql = strings.ReplaceAll(ltvSql, "{ltvField}", strings.TrimLeft(ltvField, ","))
+	ltvSql = strings.ReplaceAll(ltvSql, "{dateWord}", dateWord)
+	fDateList, fDate, accountDay := ExploreFDate(exploreHelper)
+	ltvSql = strings.ReplaceAll(ltvSql, "{fDateList}", fDateList)
+	ltvSql = strings.ReplaceAll(ltvSql, "{fDate}", fDate)
+	ltvSql = strings.ReplaceAll(ltvSql, "{accountDay}", accountDay)
+	ltvSql = strings.ReplaceAll(ltvSql, "{retainedCountDay}", retainedCountDay)
+	ltvSql = strings.ReplaceAll(ltvSql, "{ltvSelectField}", ltvSelectField)
+	ltvSql = strings.ReplaceAll(ltvSql, "{ltvEventList}", ltvEventList)
+	ltvSql = strings.ReplaceAll(ltvSql, "{ltvFirstEvent}", ltvFirstEvent)
+	exploreHelper.Sql = ltvSql
+	ExploreBuildSql(exploreHelper)
+
+	return
+}
+func ExploreBuildLtvDataNew(types string, sqlFieldList []string, exploreHelper *ExploreHelper) (resultList []map[string][]ResultExploreYList) {
+	tempDateGroupList := ExploreBuildResultToDateGroup(exploreHelper)
+	// 按照日期区间组装数据
+	for dateKey, dateItem := range exploreHelper.DateList {
+		tempDateList := make(map[string][]ResultExploreYList, 0)
+		tempYList := make([]ResultExploreYList, 0)
+
+		// 处理总体
+		tempAmountList := make([]float64, len(sqlFieldList))
+		tempZList := make([]int, len(sqlFieldList))
+		tempZList1 := make([]int, len(sqlFieldList))
+		tempTotal := 0
+		tempY := ResultExploreYList{}
+		tempY.GroupNum = len(exploreHelper.GroupField)
+		tempY.GroupCols = []string{"总体"}
+		for _, resItem := range tempDateGroupList[cast.ToString(dateItem)] {
+			// 按季度取消后面的'季度
+			resItem["dates"] = strings.TrimRight(cast.ToString(resItem["dates"]), "季度")
+			if cast.ToString(resItem["dates"]) == cast.ToString(dateItem) {
+				tempTotal += cast.ToInt(resItem["register_user_count"])
+
+				for zKey, _ := range sqlFieldList[1:] {
+					tempAmountList[zKey] += cast.ToFloat64(resItem["pay_total_"+cast.ToString(zKey)])
+					if types == "retained" {
+						tempCaseField := "ltv_" + cast.ToString(zKey)
+						tempCaseField1 := "pay_user_count_" + cast.ToString(zKey)
+						tempZList[zKey] += cast.ToInt(resItem[tempCaseField])
+						tempZList1[zKey] += cast.ToInt(resItem[tempCaseField1])
+					} else {
+						// 流失计算的未付费用户
+						tempCaseField := "pay_user_count_" + cast.ToString(zKey)
+						tempZList[zKey] += cast.ToInt(resItem["register_user_count"]) - cast.ToInt(resItem[tempCaseField])
+					}
+					// tempTotalPayAmount += cast.ToFloat64(resItem["pay_amount_"+cast.ToString(zKey)])
+				}
+
+			}
+		}
+		tempY.TotalNum = cast.ToString(tempTotal)
+		tempY.Values = append(tempY.Values, cast.ToString(tempTotal))
+		// 付费用户
+		tempY.OtherValues = append(tempY.OtherValues, cast.ToString(tempTotal))
+		tempY.ExtendValues = append(tempY.ExtendValues, cast.ToString(tempTotal))
+		for key, _ := range sqlFieldList[1:] {
+
+			// Values ltv
+			tempVal := ""
+			if cast.ToInt(tempZList1[key]) > 0 && cast.ToInt(tempAmountList[key]) > 0 && cast.ToInt(tempTotal) > 0 {
+				tempVal = cast.ToString(public.Decimal(tempAmountList[key] / cast.ToFloat64(tempTotal)))
+			}
+			tempVal = ExploreTimeGtDate(exploreHelper, key, dateKey, dateItem, PadRightZero(tempVal, 2))
+			tempY.Values = append(tempY.Values, tempVal)
+
+			//  OtherValues 付费用户数
+			tempVal1 := cast.ToString(tempZList1[key])
+			tempVal1 = ExploreTimeGtDate(exploreHelper, key, dateKey, dateItem, tempVal1)
+			tempY.OtherValues = append(tempY.OtherValues, tempVal1)
+
+			// extendValues 付费金额
+			tempVal2 := cast.ToString(tempAmountList[key])
+			tempVal2 = ExploreTimeGtDate(exploreHelper, key, dateKey, dateItem, PadRightZero(tempVal2, 2))
+			tempY.ExtendValues = append(tempY.ExtendValues, tempVal2)
+		}
+		if types == "retained" {
+			// 百分比为付费用户的百分比
+			tempY.PercentValues = BuildPercentValues(cast.ToFloat64(tempY.TotalNum), tempY.OtherValues)
+		} else {
+			// 百分比为未付费用户用户的百分比
+			tempY.PercentValues = BuildPercentValues(cast.ToFloat64(tempY.TotalNum), tempY.Values)
+			tempY.OtherValues = []string{}
+		}
+
+		tempYList = append(tempYList, tempY)
+		// 处理分组
+		for _, groupItem := range exploreHelper.UnionGroups {
+			tempY := ResultExploreYList{}
+			tempY.GroupNum = len(groupItem)
+			tempY.GroupCols = groupItem
+			tempTotal := 0
+			tempZList := make([]float64, len(sqlFieldList))
+			tempZList1 := make([]int, len(sqlFieldList))
+			tempAmountList := make([]float64, len(sqlFieldList))
+			for _, resItem := range tempDateGroupList[cast.ToString(dateItem)] {
+				// 按季度取消后面的'季度
+				resItem["dates"] = strings.TrimRight(cast.ToString(resItem["dates"]), "季度")
+				if cast.ToString(resItem["dates"]) == cast.ToString(dateItem) {
+					tempGroupMark := make([]bool, len(exploreHelper.GroupField))
+					if len(groupItem) == len(exploreHelper.GroupField) {
+						for k, filed := range exploreHelper.GroupField {
+							filed = strings.ReplaceAll(filed, "p.", "")
+							filedValue := public.GetInterfaceToString(resItem[filed])
+							if filedValue == "" {
+								filedValue = "(null)"
+							}
+							if groupItem[k] == filedValue {
+								tempGroupMark[k] = true
+							}
+						}
+					}
+
+					tempMark := 0
+					for _, value := range tempGroupMark {
+						if value == true {
+							tempMark++
+						}
+					}
+					if tempMark == len(tempGroupMark) {
+						tempTotal += cast.ToInt(resItem["register_user_count"])
+						for zKey, _ := range sqlFieldList[1:] {
+							if types == "retained" {
+								tempCaseField := "ltv_" + cast.ToString(zKey)
+								tempCaseField1 := "pay_user_count_" + cast.ToString(zKey)
+								tempZList[zKey] += cast.ToFloat64(resItem[tempCaseField])
+								tempZList1[zKey] += cast.ToInt(resItem[tempCaseField1])
+								tempAmountList[zKey] += cast.ToFloat64(resItem["pay_total_"+cast.ToString(zKey)])
+							} else {
+								// 流失计算的未付费用户
+								tempCaseField := "pay_user_count_" + cast.ToString(zKey)
+								tempZList[zKey] += cast.ToFloat64(cast.ToInt(resItem["register_user_count"]) - cast.ToInt(resItem[tempCaseField]))
+							}
+						}
+					}
+				}
+			}
+			tempY.TotalNum = cast.ToString(tempTotal)
+			tempY.Values = append(tempY.Values, cast.ToString(tempTotal))
+			tempY.OtherValues = append(tempY.OtherValues, cast.ToString(tempTotal))
+			tempY.ExtendValues = append(tempY.ExtendValues, cast.ToString(tempTotal))
+			for key, _ := range sqlFieldList[1:] {
+				tempVal := cast.ToString(tempZList[key])
+				tempVal = ExploreTimeGtDate(exploreHelper, key, dateKey, dateItem, PadRightZero(tempVal, 2))
+				tempY.Values = append(tempY.Values, tempVal)
+
+				tempVal1 := cast.ToString(tempZList1[key])
+				tempVal1 = ExploreTimeGtDate(exploreHelper, key, dateKey, dateItem, tempVal1)
+				tempY.OtherValues = append(tempY.OtherValues, tempVal1)
+
+				// extendValues 付费金额
+				tempVal2 := cast.ToString(tempAmountList[key])
+				tempVal2 = ExploreTimeGtDate(exploreHelper, key, dateKey, dateItem, PadRightZero(tempVal2, 2))
+				tempY.ExtendValues = append(tempY.ExtendValues, tempVal2)
+
+			}
+			if types == "retained" {
+				// 百分比为付费用户的百分比
+				tempY.PercentValues = BuildPercentValues(cast.ToFloat64(tempY.TotalNum), tempY.OtherValues)
+			} else {
+				// 百分比为未付费用户用户的百分比
+				tempY.PercentValues = BuildPercentValues(cast.ToFloat64(tempY.TotalNum), tempY.Values)
+				tempY.OtherValues = []string{}
+			}
+			tempYList = append(tempYList, tempY)
+		}
+		// 按周的处理
+		if exploreHelper.ByTime == "byWeek" {
+			dateItem = exploreHelper.DateList1[dateKey]
+		}
+		tempDateList[dateItem] = tempYList
+		resultList = append(resultList, tempDateList)
+	}
+	return
+}
 
 import (
 	"strings"
