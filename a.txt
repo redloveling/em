@@ -1,5 +1,87 @@
 package panel
 package panel
+package panel
+
+import (
+	"git.code.tencent.com/liuzhenqiang/ghgame_framework/util/gstring"
+)
+
+var NewAddPayRateSql = []byte(`
+	SELECT
+		{sqlOutField}
+		,round(sum(new_pay_user_count)/sum(register_user_count),4) as number
+	FROM
+		(
+		SELECT
+			{sqlOutField}
+			,count(DISTINCT {dimension}) as new_pay_user_count
+		FROM
+		 	(	
+			SELECT
+				{sqlField}
+				,{dimension}
+				,retention(event = 'register', event = 'deliver_goods') as r
+			FROM 	
+				{CKTable} p
+				{sqlJoin}
+			WHERE
+				{sqlWhere}
+				and event in ('register','deliver_goods')
+			GROUP BY
+				{sqlGroup} ,{dimension} 
+			HAVING  r[1]>0 and r[2]>0
+			)
+	  	GROUP BY {sqlOutGroup}
+	  	ORDER BY {sqlOutGroup}
+		) a
+	right join
+		(SELECT 
+			{sqlField}
+			,count(distinct({dimension})) as register_user_count
+		FROM
+			{CKTable} p 
+			{sqlJoin}
+		WHERE
+			{sqlWhere}
+			and event='register'
+		GROUP BY {sqlGroup}
+		ORDER BY {sqlGroup}
+		) b
+	ON {sqlABJoinOn}
+	GROUP BY {sqlOutGroup}
+	ORDER BY {sqlOutGroup}
+`)
+
+var NewAddPayRateColumnIndex = ""
+var NewAddPayRateColumnName = "新增付费率"
+
+// 探索-新增付费率---新增付费用户数（新增用户中首次付费的人数）/新增用户数（筛选时间段范围内的新增用户数）注册用户数
+func ExploreNewAddPayRate(exploreHelper *ExploreHelper) (result ResultExplore, err error) {
+
+	// 初始化
+	result = ExploreInitData(exploreHelper)
+
+	// 构建sql
+	exploreHelper.Sql = gstring.BytesToString(NewAddPayRateSql)
+	ExploreBuildSql(exploreHelper)
+
+	// 执行sql
+	if err = ExploreRunSql(exploreHelper); err != nil {
+		return
+	}
+
+	// 构建数据
+	result.Y = ExploreBuildOneColumnData(NewAddPayRateColumnName, exploreHelper)
+
+	// 列指标
+	result.ColumnIndex = []string{NewAddPayRateColumnIndex}
+
+	// 列名称
+	result.Indicators = ExploreBuildOneIndicators(NewAddPayRateColumnName, exploreHelper)
+
+	return
+}
+
 
 import (
 	"git.code.tencent.com/liuzhenqiang/ghgame_framework/util/gstring"
