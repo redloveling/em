@@ -5,6 +5,88 @@ package panel
 package panel
 package panel
 package panel
+package panel
+
+import "git.code.tencent.com/liuzhenqiang/ghgame_framework/util/gstring"
+
+var AverageOnlineDurationSql = []byte(`
+	SELECT 
+		{sqlOutField}
+		,IF(isNaN(sum(onlineTime)/sum(active_user_count) as t),0,if(isInfinite(t),1,round(t,2))) as number
+	FROM
+		(
+		SELECT 
+			{sqlField}
+			,sum(online_time) as onlineTime 
+		FROM 
+			{CKTable} p 
+			{sqlJoin}
+		WHERE 
+			{sqlWhere}
+			 and event in {activeUserEventList}
+		GROUP BY 
+			{sqlGroup}
+		ORDER BY {sqlGroup}	
+	) a
+	right join
+	(
+		SELECT 
+			{sqlOutField}
+			,count(DISTINCT {dimension}) active_user_count
+		FROM 	
+			(SELECT
+				{sqlField}
+				,{dimension}
+				,count(DISTINCT toDate(event_time)) countDay
+			FROM 
+				{CKTable} p
+				{sqlJoin}
+			WHERE
+				{sqlWhere}
+				and event='login'
+			GROUP BY 
+				{sqlGroup} ,{dimension}  
+			HAVING countDay>={countDay}
+			ORDER BY dates
+         )
+		  GROUP BY {sqlOutGroup}  
+		  ORDER BY {sqlOutGroup}
+	) b
+	on {sqlABJoinOn}
+	GROUP BY
+		{sqlOutGroup}
+	ORDER BY 
+		{sqlOutGroup}
+`)
+
+var AverageOnlineDurationColumnIndex = ""
+var AverageOnlineDurationColumnName = "平均在线时长(s)"
+
+// 平均在线时长 当日活跃用户数在线时长求和/活跃用户数
+func ExploreAverageOnlineDuration(exploreHelper *ExploreHelper) (result ResultExplore, err error) {
+
+	// 初始化
+	result = ExploreInitData(exploreHelper)
+	exploreHelper.ItemName = "averageOnlineDuration"
+
+	// 构建sql
+	exploreHelper.Sql = gstring.BytesToString(AverageOnlineDurationSql)
+	ExploreBuildSql(exploreHelper)
+
+	// 执行sql
+	ExploreRunSql(exploreHelper)
+
+	// 构建数据
+	result.Y = ExploreBuildOneColumnData(AverageOnlineDurationColumnName, exploreHelper)
+
+	// 列指标
+	result.ColumnIndex = []string{AverageOnlineDurationColumnIndex}
+
+	// 列名称
+	result.Indicators = ExploreBuildOneIndicators(AverageOnlineDurationColumnName, exploreHelper)
+
+	return
+}
 
 import (
 	"git.code.tencent.com/liuzhenqiang/ghgame_framework/util/gslice"
