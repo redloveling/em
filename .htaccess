@@ -5,4 +5,849 @@
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteRule ^(.*)$ index.php/$1 [QSA,PT,L]
-</IfModule>
+</IfModule>package panel
+
+import (
+	"encoding/json"
+	"errors"
+	"reflect"
+	"strings"
+	"time"
+	"wt/econ/api/app/provider/public"
+
+	"git.code.tencent.com/liuzhenqiang/ghgame_framework/contract"
+	"git.code.tencent.com/liuzhenqiang/ghgame_framework/gin"
+	"git.code.tencent.com/liuzhenqiang/ghgame_framework/util/gslice"
+	"gitee.com/golang-module/carbon/v2"
+	cacheRedis "github.com/go-redis/redis/v8"
+	"github.com/spf13/cast"
+	"gorm.io/gorm"
+)
+
+type ExploreHelper struct {
+	CkDb          *gorm.DB
+	Db            *gorm.DB
+	PermissionDb  *gorm.DB
+	redisDb       *cacheRedis.Client
+	Log           contract.Log
+	Ctx           *gin.Context
+	GameId        string
+	ByTime        string
+	StartDate     string
+	EndDate       string
+	Condition     string
+	Grouping      string
+	Modular       string
+	UserId        int
+	RetainedCount int
+
+	DateList    []string
+	DateList1   []string
+	UnionGroups [][]string
+	GroupField  []string
+	GroupLabel  []string
+	ResultList  []map[string]interface{}
+
+	Sql             string
+	SqlField        string
+	SqlWhere        string
+	SqlGroup        string
+	SqlJoin         string
+	SqlOutField     string
+	SqlOutGroup     string
+	SqlFieldNoDates string
+	SqlWhereNoDates string
+	SqlABJoinOn     string
+	CkStartDate     string
+	CkEndDate       string
+
+	OneColumnName string
+
+	BuildColumns []string
+
+	ExecMark  bool
+	EventList string
+
+	Dimension    string
+	ItemName     string
+	RetentionDay int
+}
+
+func ExploreInit(exploreHelper *ExploreHelper) (resultData ResultExplore, err error) {
+	resultData.X = make([]string, 0)
+	resultData.Y = new(interface{})
+	resultData.Z = make([]string, 0)
+	resultData.GroupLabel = make([]string, 0)
+	resultData.UnionGroups = make([][]string, 0)
+	resultData.ColumnIndex = make([]string, 0)
+
+	if err = ExploreBuildDateList(exploreHelper); err != nil {
+		return
+	}
+
+	if err = ExploreBuildWhere(exploreHelper); err != nil {
+		return
+	}
+
+	if err = ExploreBuildGroup(exploreHelper); err != nil {
+		return
+	}
+	return
+}
+
+// 处理时间
+func ExploreBuildDateList(exploreHelper *ExploreHelper) (err error) {
+	dateList, dateList1, _, errCode := public.GetDate(exploreHelper.StartDate, exploreHelper.EndDate, exploreHelper.ByTime)
+	if errCode != 0 {
+		exploreHelper.Log.Error(exploreHelper.Ctx, "ExploreBuildDateList:获取日期出错", map[string]interface{}{"err": err})
+		return
+	}
+	exploreHelper.DateList = dateList
+	exploreHelper.DateList1 = dateList1
+	return
+}
+func ExploreBuildEndDate(exploreHelper *ExploreHelper, endDate string) (end string) {
+	dateUnit := ""
+	if exploreHelper.ByTime == "byDay" {
+		dateUnit = "addDays"
+	}
+	if exploreHelper.ByTime == "byWeek" {
+		dateUnit = "addWeeks"
+	}
+	if exploreHelper.ByTime == "byMonth" {
+		dateUnit = "addMonths"
+	}
+	if exploreHelper.ByTime == "byQuarter" {
+		dateUnit = "addQuarters"
+	}
+	if exploreHelper.ByTime == "byYear" {
+		dateUnit = "addYears"
+	}
+	// ltv 留存统计到第7天
+	if gslice.ContainString([]string{"retained", "ltv"}, exploreHelper.Modular) {
+		endDate = "toDate(" + dateUnit + "(" + endDate + ", " + cast.ToString(exploreHelper.RetainedCount+1) + "))"
+	}
+	// 回归率要统计到第8天
+	if gslice.ContainString([]string{"returnUseRate"}, exploreHelper.Modular) {
+		endDate = "toDate(" + dateUnit + "(" + endDate + ", 8))"
+	}
+
+	return endDate
+}
+
+// 处理where条件
+func ExploreBuildWhere(exploreHelper *ExploreHelper) (err error) {
+	fieldList, err := public.GetFieldList(exploreHelper.CkDb, exploreHelper.Ctx, exploreHelper.Log)
+	if err != nil {
+		exploreHelper.Log.Error(exploreHelper.Ctx, "ExploreBuildWhere:获取字段出错", map[string]interface{}{"err": err})
+		return
+	}
+	// 获取时间
+	startDate, endDate := GetCkStartEndDate(exploreHelper.ByTime, exploreHelper.StartDate, exploreHelper.EndDate)
+	endDate = ExploreBuildEndDate(exploreHelper, endDate)
+	exploreHelper.CkStartDate = startDate
+	exploreHelper.CkEndDate = endDate
+	SqlWhere := " toDate(p.event_time)>=" + startDate + " and toDate(p.event_time)<=" + endDate
+	if exploreHelper.Condition != "{}" && exploreHelper.Condition != "" {
+		SqlWhere1, errCode := public.GetCondition(exploreHelper.Condition, public.WhereData{}, fieldList, false, exploreHelper.CkDb)
+		if errCode != 0 {
+			exploreHelper.Log.Error(exploreHelper.Ctx, "ExploreBuildWhere:获取条件出错", map[string]interface{}{"errCode": errCode})
+			return errors.New("ExploreBuildWhere:获取条件出错 errCode" + cast.ToString(errCode))
+		}
+		if SqlWhere1 != "" {
+			SqlWhere += " and (" + SqlWhere1 + ")"
+			exploreHelper.SqlWhereNoDates = " and (" + SqlWhere1 + ")"
+		}
+	}
+
+	// 加上game_id
+	SqlWhere += " and p.game_id='" + exploreHelper.GameId + "' "
+	exploreHelper.SqlWhere = SqlWhere
+	return
+}
+
+var ActiveUserEventList = "('login','logout','heartbeat')"
+
+func ExploreBuildEventSql(exploreHelper *ExploreHelper) (eventSql string) {
+	var event string
+	// 注册用户数
+	if exploreHelper.Modular == "register" {
+		event = "register"
+	}
+	// 活跃用户数
+	if exploreHelper.Modular == "active" {
+		event = "login,heartbeat"
+	}
+	// 当月充值总额
+	if exploreHelper.Modular == "thisMonthRecharge" {
+		event = "deliver_goods"
+	}
+	// 充值总额
+	if exploreHelper.Modular == "rechargeTotal" {
+		event = "deliver_goods"
+	}
+	// 基础数据报表
+	if exploreHelper.Modular == "basicsData" {
+		event = "register,create_role,login,sdk_initialization,logout,deliver_goods,heartbeat"
+	}
+	// 进阶数据报表
+	if exploreHelper.Modular == "advanceData" {
+		event = "register,login,deliver_goods,logout,heartbeat"
+	}
+	// ARPU与ARPPU
+	if exploreHelper.Modular == "ARRPU" {
+		event = "login,deliver_goods"
+	}
+	// 付费率与新增付费率
+	if exploreHelper.Modular == "payRate" {
+		event = "deliver_goods,register"
+	}
+
+	// 渠道新增用户数
+	if exploreHelper.Modular == "channelRegister" {
+		event = "register"
+	}
+	// 礼包购买情况
+	if exploreHelper.Modular == "paymentSituation" {
+		event = "deliver_goods"
+	}
+	// 各渠道新增留存
+	if exploreHelper.Modular == "retained" {
+		event = "register,login"
+	}
+	// 流失用户回归率
+	if exploreHelper.Modular == "returnUseRate" {
+		event = "register"
+	}
+	// 付费情况
+	if exploreHelper.Modular == "paySituation" {
+		event = "deliver_goods,register,login"
+	}
+	// 近7日累充排名
+	if exploreHelper.Modular == "accumulatedRanking" {
+		event = "deliver_goods"
+	}
+	// 日充值总次数
+	if exploreHelper.Modular == "payFrequency" {
+		event = "deliver_goods"
+	}
+	// 日充值用户数
+	if exploreHelper.Modular == "payUserNumber" {
+		event = "deliver_goods"
+	}
+	// 7日LTV
+	if exploreHelper.Modular == "ltv" {
+		event = "deliver_goods,register"
+	}
+	// 充值用户周累充分布
+	if exploreHelper.Modular == "accumulateDistribution" {
+		event = "deliver_goods"
+	}
+
+	// 首充购买情况
+	if exploreHelper.Modular == "firstPaySituation" {
+		event = "deliver_goods"
+	}
+	// 活跃用户数
+	if exploreHelper.Modular == "activeUser" {
+		event = "login,logout,heartbeat"
+	}
+	// 活跃老玩家数
+	if exploreHelper.Modular == "oldActiveUser" {
+		event = "login,logout,register,heartbeat"
+	}
+	// 周活跃用户数
+	if exploreHelper.Modular == "weekActiveUser" {
+		event = "login,logout,heartbeat"
+	}
+	// 月活跃用户数
+	if exploreHelper.Modular == "monthActiveUser" {
+		event = "login,logout,heartbeat"
+	}
+
+	// DAU
+	if exploreHelper.Modular == "dau" {
+		event = "login,logout,heartbeat"
+	}
+	// 活跃用户生命周期构成
+	if exploreHelper.Modular == "lifeCycle" {
+		event = "login,logout,heartbeat"
+	}
+	// 活跃用户数（按渠道）
+	if exploreHelper.Modular == "activeUserChannel" {
+		event = "login,logout,heartbeat"
+	}
+	// 周登录天数分布
+	if exploreHelper.Modular == "weekLogin" {
+		event = "login"
+	}
+	// 在线时间分布
+	if exploreHelper.Modular == "onlineDuration" {
+		event = "login,logout,heartbeat"
+	}
+	if event != "" {
+		eventList := strings.Split(event, ",")
+		eventSql = " and p.event  in ("
+		for _, value := range eventList {
+			eventSql += "'" + value + "',"
+		}
+		eventSql = strings.TrimRight(eventSql, ",")
+		eventSql += ")"
+	}
+	return
+}
+
+// 处理where条件
+func ExploreBuildGroup(exploreHelper *ExploreHelper) (err error) {
+	var groupData []public.GroupingData
+	groupColsSorted := make([][]string, 0)
+	if exploreHelper.Grouping != "[]" && exploreHelper.Grouping != "" {
+		err = json.Unmarshal([]byte(exploreHelper.Grouping), &groupData)
+		if err != nil {
+			return
+		}
+		// 获取分组时带上事件类型
+		groupWhere := ""
+		exploreHelper.SqlWhere = strings.TrimRight(exploreHelper.SqlWhere, " ")
+		exploreHelper.SqlWhere = strings.TrimRight(exploreHelper.SqlWhere, "and")
+		groupWhere = exploreHelper.SqlWhere + ExploreBuildEventSql(exploreHelper) + " and "
+		groupColsSorted, err = public.GetGroup(groupData, exploreHelper.CkDb, exploreHelper.ByTime, exploreHelper.StartDate, exploreHelper.EndDate, exploreHelper.GameId, groupWhere, -1)
+		if err != nil {
+			exploreHelper.Log.Error(exploreHelper.Ctx, "ExploreBuildGroup:获取分组出错", map[string]interface{}{"err": err})
+			return
+		}
+
+		exploreHelper.UnionGroups = public.GetExploreGroupList(groupColsSorted)
+		// 默认只展示最多1000个分组
+		if len(exploreHelper.UnionGroups) > 1000 {
+			exploreHelper.UnionGroups = exploreHelper.UnionGroups[0:1000]
+		}
+	}
+	// sqlField是select的字段
+	// sqlGroup是别名的字段
+	sqlField, sqlGroup, sqlJoin := public.GetFieldGroup(groupData, exploreHelper.ByTime, -1, "", exploreHelper.GameId, exploreHelper.CkDb)
+	exploreSqlField := ""
+	exploreGroupField := ""
+	exploreOutField := "dates"
+	exploreNoDatesField := ""
+	var groupField []string
+	exploreSqlField += GetCkByTimeFormatter("event_time", exploreHelper.ByTime) + " as dates"
+
+	exploreGroupField += "dates"
+	abJoinOn := "a.dates = b.dates and"
+	if sqlField != "" {
+		for _, value := range strings.Split(sqlField, ",") {
+			if !strings.Contains(value, " AS ") {
+				tempField := strings.ReplaceAll(value, ".", "_")
+				exploreSqlField += ", " + value + " as " + tempField
+			} else {
+				exploreSqlField += ", " + value
+			}
+
+		}
+		for _, value := range strings.Split(sqlGroup, ",") {
+			tempField := strings.ReplaceAll(value, ".", "_")
+			exploreGroupField += "," + tempField
+			exploreNoDatesField += "," + tempField
+			abJoinOn += " a." + tempField + " = b." + tempField + " and"
+			groupField = append(groupField, tempField)
+			exploreOutField += "," + tempField
+		}
+	}
+	exploreHelper.SqlField = strings.TrimLeft(exploreSqlField, ",")
+	exploreHelper.SqlGroup = strings.TrimLeft(exploreGroupField, ",")
+	exploreHelper.SqlJoin = sqlJoin
+	exploreHelper.SqlOutField = exploreOutField
+	exploreHelper.SqlOutGroup = exploreOutField
+	exploreHelper.SqlFieldNoDates = exploreNoDatesField
+	exploreHelper.GroupField = groupField
+	exploreHelper.GroupLabel = public.GetGroupLabel(groupData)
+	exploreHelper.SqlABJoinOn = strings.TrimRight(abJoinOn, "and")
+	return
+}
+
+// 处理sql
+func ExploreBuildSql(exploreHelper *ExploreHelper) (err error) {
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{CKTable}", GetCkTableByGameId(exploreHelper.GameId))
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{sqlField}", exploreHelper.SqlField)
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{sqlWhere}", exploreHelper.SqlWhere)
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{sqlGroup}", exploreHelper.SqlGroup)
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{sqlJoin}", exploreHelper.SqlJoin)
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{sqlOutField}", exploreHelper.SqlOutField)
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{sqlOutGroup}", exploreHelper.SqlOutGroup)
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{sqlFieldNoDates}", exploreHelper.SqlFieldNoDates)
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{sqlABJoinOn}", exploreHelper.SqlABJoinOn)
+
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{countDay}", GetActiveUserDay(exploreHelper.ByTime))
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{activeUserEventList}", ActiveUserEventList)
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{startDate}", exploreHelper.StartDate)
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{endDate}", exploreHelper.EndDate)
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{ckStartDate}", exploreHelper.CkStartDate)
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{ckEndDate}", exploreHelper.CkEndDate)
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{sqlWhereNoDates}", exploreHelper.SqlWhereNoDates)
+	if exploreHelper.Dimension == "" {
+		exploreHelper.Dimension = "device_id"
+	}
+	if exploreHelper.Modular == "ltv" && exploreHelper.Dimension == "device_id" {
+		exploreHelper.Dimension = "uid"
+	}
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{dimension}", exploreHelper.Dimension)
+	return
+}
+func ExploreBuildDimension(defaultStr string, exploreHelper *ExploreHelper) (returnStr string) {
+	// 创角转化率 device_id
+	if exploreHelper.ItemName == "create_role_rate" && gslice.ContainString([]string{"uid", "role_id"}, exploreHelper.Dimension) {
+		return "-"
+	}
+	// 注册用户数 device_id uid
+	if exploreHelper.ItemName == "register_user_count" && gslice.ContainString([]string{"role_id"}, exploreHelper.Dimension) {
+		return "-"
+	}
+	// // 在线时长 uid role_id
+	// if gslice.ContainString([]string{"onlineDuration","averageOnlineDuration"}, exploreHelper.ItemName) && gslice.ContainString([]string{"device_id"}, exploreHelper.Dimension) {
+	// 	return "-"
+	// }
+	return defaultStr
+}
+
+func ExploreRunSql(exploreHelper *ExploreHelper) (err error) {
+	if exploreHelper.ExecMark == true {
+		exploreHelper.ResultList = []map[string]interface{}{}
+		return
+	}
+	exploreHelper.ResultList = []map[string]interface{}{}
+	err = exploreHelper.CkDb.Raw(exploreHelper.Sql).Scan(&exploreHelper.ResultList).Error
+	// fmt.Println("RunSql===:", exploreHelper.Modular, exploreHelper.OneColumnName, "sql===", exploreHelper.Sql)
+	exploreHelper.Log.Info(exploreHelper.Ctx, "RunSql==="+exploreHelper.Modular+"==="+exploreHelper.OneColumnName, map[string]interface{}{"sql": exploreHelper.Sql})
+	if err != nil {
+		exploreHelper.Log.Error(exploreHelper.Ctx, "ExploreRunSql:执行sql出错", map[string]interface{}{"err": err})
+		return
+	}
+	// fmt.Printf("ResultList===%+v\n:", exploreHelper.ResultList)
+	return
+}
+
+func ExploreInitData(exploreHelper *ExploreHelper) (result ResultExplore) {
+	ExploreInit(exploreHelper)
+
+	result.GroupLabel = exploreHelper.GroupLabel
+	result.UnionGroups = exploreHelper.UnionGroups
+	result.Z = []string{}
+	// 全部totalNum为所有values的总和
+	result.IsCalculation = true
+	if len(result.UnionGroups) == 0 {
+		result.UnionGroups = [][]string{}
+	}
+	result.X = exploreHelper.DateList
+	if exploreHelper.ByTime == "byWeek" {
+		result.X = exploreHelper.DateList1
+	}
+	if len(result.GroupLabel) == 0 {
+		result.GroupLabel = []string{}
+	}
+	exploreHelper.ItemName = ""
+	return
+}
+func ExploreBuildOneIndicators(columnName string, exploreHelper *ExploreHelper) (indicators []string) {
+	if exploreHelper.OneColumnName != "" {
+		columnName = exploreHelper.OneColumnName
+	}
+	return []string{columnName}
+}
+
+// 构建只有一列的数据
+func ExploreBuildOneColumnData(columnName string, exploreHelper *ExploreHelper) (resultList []map[string][]ResultExploreYList) {
+	YList := make([]ResultExploreYList, 0)
+	if exploreHelper.OneColumnName != "" {
+		columnName = exploreHelper.OneColumnName
+	}
+	if len(exploreHelper.UnionGroups) == 0 {
+		groupCols := "总体"
+		if len(exploreHelper.ResultList) == 0 {
+			groupCols = ""
+		}
+		exploreHelper.UnionGroups = append(exploreHelper.UnionGroups, []string{groupCols})
+	}
+	if exploreHelper.Modular == "paymentSituation" && len(exploreHelper.UnionGroups) > 100 {
+		exploreHelper.UnionGroups = exploreHelper.UnionGroups[0:100]
+	}
+	tempDateGroupList := ExploreBuildResultToDateGroup(exploreHelper)
+	for _, groupItem := range exploreHelper.UnionGroups {
+		tempY := ResultExploreYList{}
+		tempY.GroupNum = len(groupItem)
+		tempY.GroupCols = groupItem
+		tempValues := make([]string, 0)
+		if gslice.ContainString(PercentColumnArr, columnName) {
+			tempY.Unit = "%"
+		}
+		for _, dateItem := range exploreHelper.DateList {
+			tempValue := ExploreBuildDimension("0", exploreHelper)
+			for _, resItem := range tempDateGroupList[cast.ToString(dateItem)] {
+				typeOf := reflect.TypeOf(resItem["dates"])
+				if typeOf == reflect.TypeOf(time.Time{}) {
+					tempDate := resItem["dates"].(time.Time)
+					resItem["dates"] = tempDate.Format("2006-01-02")
+				}
+				resItem["dates"] = public.GetInterfaceToString(resItem["dates"])
+				// 按季度取消后面的'季度
+				resItem["dates"] = strings.TrimRight(cast.ToString(resItem["dates"]), "季度")
+				if cast.ToString(resItem["dates"]) == cast.ToString(dateItem) {
+					if len(exploreHelper.GroupField) == 0 {
+						tempValue = BuildExploreValues(columnName, cast.ToString(resItem["number"]))
+					} else {
+						tempGroupMark := make([]bool, len(groupItem))
+						if len(groupItem) == len(exploreHelper.GroupField) {
+							for k, filed := range exploreHelper.GroupField {
+								filedValue := public.GetInterfaceToString(resItem[filed])
+								if filedValue == "" {
+									filedValue = "(null)"
+								}
+								if groupItem[k] == filedValue {
+									tempGroupMark[k] = true
+								}
+							}
+						}
+						tempMark := 0
+						for _, value := range tempGroupMark {
+							if value == true {
+								tempMark++
+							}
+						}
+						if tempMark == len(tempGroupMark) && tempGroupMark[0] == true {
+							tempValue = BuildExploreValues(columnName, cast.ToString(resItem["number"]))
+						}
+					}
+				}
+			}
+			tempValues = append(tempValues, cast.ToString(tempValue))
+		}
+		tempY.TotalNum = GetValuesTotal(tempValues)
+		tempY.Values = tempValues
+		tempY.PercentValues = BuildPercentValues(cast.ToFloat64(tempY.TotalNum), tempValues)
+		tempY.OtherValues = []string{}
+		YList = append(YList, tempY)
+	}
+	resultList = append(resultList, map[string][]ResultExploreYList{columnName: YList})
+	return
+}
+
+func ExploreBuildResultToDateGroup(exploreHelper *ExploreHelper) (a map[string][]map[string]interface{}) {
+	tempDateGroupList := make(map[string][]map[string]interface{})
+	for _, resItem := range exploreHelper.ResultList {
+		typeOf := reflect.TypeOf(resItem["dates"])
+		if typeOf == reflect.TypeOf(time.Time{}) {
+			tempDate := resItem["dates"].(time.Time)
+			resItem["dates"] = tempDate.Format("2006-01-02")
+		}
+		resItem["number"] = ExploreBuildDimension(cast.ToString(resItem["number"]), exploreHelper)
+		// 按季度取消后面的'季度
+		tempDate := strings.TrimRight(cast.ToString(resItem["dates"]), "季度")
+		tempDateGroupList[cast.ToString(tempDate)] = append(tempDateGroupList[tempDate], resItem)
+	}
+	return tempDateGroupList
+}
+
+// 构建多列的数据 【总体字段是 case_total  其他的以case_0开始 case_1 case_2
+func ExploreBuildMoreColumnData(sqlFieldList []string, exploreHelper *ExploreHelper) (resultList []map[string][]ResultExploreYList) {
+
+	tempDateGroupList := ExploreBuildResultToDateGroup(exploreHelper)
+	// 按照日期区间组装数据
+	for dateKey, dateItem := range exploreHelper.DateList {
+		tempDateList := make(map[string][]ResultExploreYList, 0)
+		tempYList := make([]ResultExploreYList, 0)
+
+		// 处理总体
+		tempZList := make([]int, len(sqlFieldList)) // 生成一个用于存放数据的临时数组
+		tempTotal := 0
+		tempY := ResultExploreYList{}
+		tempY.GroupNum = len(exploreHelper.GroupField)
+		tempY.GroupCols = []string{"总体"}
+
+		for _, resItem := range tempDateGroupList[cast.ToString(dateItem)] {
+			typeOf := reflect.TypeOf(resItem["dates"])
+			if typeOf == reflect.TypeOf(time.Time{}) {
+				tempDate := resItem["dates"].(time.Time)
+				resItem["dates"] = tempDate.Format("2006-01-02")
+			}
+			// 按季度取消后面的'季度
+			resItem["dates"] = strings.TrimRight(cast.ToString(resItem["dates"]), "季度")
+			if cast.ToString(resItem["dates"]) == cast.ToString(dateItem) {
+				tempTotal += cast.ToInt(resItem["case_total"])
+				for zKey, field := range sqlFieldList {
+					if field == "case_total" {
+						continue
+					}
+					// tempCaseField := "case_" + cast.ToString(zKey)
+					tempZList[zKey] += cast.ToInt(resItem[field])
+				}
+				continue
+			}
+		}
+		tempY.TotalNum = cast.ToString(tempTotal)
+		tempY.Values = append(tempY.Values, cast.ToString(tempTotal))
+		for key, _ := range sqlFieldList {
+			tempVal := cast.ToString(tempZList[key])
+			tempVal = ExploreTimeGtDate(exploreHelper, key, dateKey, dateItem, tempVal)
+			tempY.Values = append(tempY.Values, tempVal)
+		}
+		tempY.PercentValues = BuildPercentValues(cast.ToFloat64(tempY.TotalNum), tempY.Values)
+		tempY.OtherValues = []string{}
+		tempYList = append(tempYList, tempY)
+		// 处理分组
+		for _, groupItem := range exploreHelper.UnionGroups {
+			tempY := ResultExploreYList{}
+			tempY.GroupNum = len(groupItem)
+			tempY.GroupCols = groupItem
+			tempTotal := 0
+			tempZList := make([]int, len(sqlFieldList))
+			for _, resItem := range tempDateGroupList[cast.ToString(dateItem)] {
+				typeOf := reflect.TypeOf(resItem["dates"])
+				if typeOf == reflect.TypeOf(time.Time{}) {
+					tempDate := resItem["dates"].(time.Time)
+					resItem["dates"] = tempDate.Format("2006-01-02")
+				}
+				// 按季度取消后面的'季度
+				resItem["dates"] = strings.TrimRight(cast.ToString(resItem["dates"]), "季度")
+				if cast.ToString(resItem["dates"]) == cast.ToString(dateItem) {
+					tempGroupMark := make([]bool, len(exploreHelper.GroupField))
+					if len(groupItem) == len(exploreHelper.GroupField) {
+						for k, filed := range exploreHelper.GroupField {
+							filed = strings.ReplaceAll(filed, "p.", "")
+							filedValue := public.GetInterfaceToString(resItem[filed])
+							if filedValue == "" {
+								filedValue = "(null)"
+							}
+							if groupItem[k] == filedValue {
+								tempGroupMark[k] = true
+							}
+						}
+					}
+					tempMark := 0
+					for _, value := range tempGroupMark {
+						if value == true {
+							tempMark++
+						}
+					}
+					if tempMark == len(tempGroupMark) {
+						tempTotal += cast.ToInt(resItem["case_total"])
+						for zKey, field := range sqlFieldList {
+							if field == "case_total" {
+								continue
+							}
+							// tempCaseField := "case_" + cast.ToString(zKey)
+							tempZList[zKey] += cast.ToInt(resItem[field])
+						}
+					}
+					continue
+				}
+			}
+			tempY.TotalNum = cast.ToString(tempTotal)
+			tempY.Values = append(tempY.Values, cast.ToString(tempTotal))
+			for key, _ := range sqlFieldList {
+				tempVal := cast.ToString(tempZList[key])
+				tempVal = ExploreTimeGtDate(exploreHelper, key, dateKey, dateItem, tempVal)
+				tempY.Values = append(tempY.Values, tempVal)
+			}
+			tempY.PercentValues = BuildPercentValues(cast.ToFloat64(tempY.TotalNum), tempY.Values)
+			tempY.OtherValues = []string{}
+			tempYList = append(tempYList, tempY)
+		}
+		// 按周的处理
+		if exploreHelper.ByTime == "byWeek" {
+			dateItem = exploreHelper.DateList1[dateKey]
+		}
+		tempDateList[dateItem] = tempYList
+		resultList = append(resultList, tempDateList)
+	}
+	return
+}
+func GetCkByTimeFormatter(field, byTime string) (formatter string) {
+	if byTime == "byDay" {
+		return "FROM_UNIXTIME( " + field + ", '%Y-%m-%d' )"
+	}
+	if byTime == "byWeek" {
+		return "toYearWeek(toDateTime(FROM_UNIXTIME( " + field + ", '%Y-%m-%d' )),1)"
+	}
+	if byTime == "byMonth" {
+		return "FROM_UNIXTIME( " + field + ", '%Y-%m' )"
+	}
+	if byTime == "byQuarter" {
+		return "CONCAT(FROM_UNIXTIME(" + field + ",'%Y'), '-', toString(quarter( toDate(" + field + "))))"
+	}
+	if byTime == "byYear" {
+		return "FROM_UNIXTIME( " + field + ", '%Y' )"
+	}
+	return
+}
+
+func ExploreAppendOneColumnData(result ResultExplore, resultYList []map[string][]ResultExploreYList) (newYList []map[string][]ResultExploreYList) {
+	if result.Y == nil {
+		return
+	}
+	list := result.Y.([]map[string][]ResultExploreYList)
+	if len(list) > 0 {
+		newYList = append(resultYList, list[0])
+	}
+	return
+}
+
+// 同比（同比增长率 =（本期数 - 同期数) / 同期数）
+// 只有按天有同比
+func ExploreBuildYearOnYear(sql string, exploreHelper *ExploreHelper) (yearOnYear string, err error) {
+	if exploreHelper.ByTime != "byDay" {
+		return "-", nil
+	}
+	// 计算公式
+	formula := "if(isNaN((currentCount-beforeCount)/beforeCount as t),0,if(isInfinite(t),1,round(t,4))) as number"
+
+	// 本期时间currentDate
+	currentDate := ""
+	// 同期时间beforeDate
+	beforeDate := ""
+
+	// 本期时间为结束时间
+	currentDate = "toDate(event_time)=toDate('" + exploreHelper.EndDate + "')"
+	// 同期时间为结束时间上周的同一天
+	beforeDate = "toDate(event_time)=subtractDays(toDate('" + exploreHelper.EndDate + "'),7)"
+
+	sql = strings.ReplaceAll(sql, "{formula}", formula)
+	sql = strings.ReplaceAll(sql, "{currentDate}", currentDate)
+	sql = strings.ReplaceAll(sql, "{beforeDate}", beforeDate)
+	sql = strings.ReplaceAll(sql, "{CKTable}", GetCkTableByGameId(exploreHelper.GameId))
+	sql = strings.ReplaceAll(sql, "{sqlJoin}", exploreHelper.SqlJoin)
+	sql = strings.ReplaceAll(sql, "{sqlWhereNoDates}", exploreHelper.SqlWhereNoDates)
+	sql = strings.ReplaceAll(sql, "{dimension}", exploreHelper.Dimension)
+	sql = strings.ReplaceAll(sql, "{activeUserEventList}", ActiveUserEventList)
+
+	var resultList = []map[string]interface{}{}
+	err = exploreHelper.CkDb.Raw(sql).Scan(&resultList).Error
+	if err != nil {
+		exploreHelper.Log.Error(exploreHelper.Ctx, "ExploreBuildYearOnYear:执行sql出错", map[string]interface{}{"err": err})
+		return
+	}
+	yearOnYear = cast.ToString(resultList[0]["number"])
+	return
+}
+
+// 环比（环比增长率 =（本期数 - 上期数) /上期数） 最新的时间
+func ExploreBuildRingRatio(sql string, exploreHelper *ExploreHelper) (ringRatio string, err error) {
+	// 计算公式
+	formula := "if(isNaN((currentCount-beforeCount)/beforeCount as t),0,if(isInfinite(t),1,round(t,4))) as number"
+
+	// 本期时间currentDate
+	currentDate := ""
+	// 上期时间beforeDate
+	beforeDate := ""
+
+	// 按天 是计算当天和前一天
+	if exploreHelper.ByTime == "byDay" {
+		// 最新的一天为结束时间
+		currentDate = "toDate(event_time)=toDate('" + exploreHelper.EndDate + "')"
+		beforeDate = "toDate(event_time)=subtractDays(toDate('" + exploreHelper.EndDate + "'),1)"
+	}
+
+	// 按周 是计算当周和上周
+	if exploreHelper.ByTime == "byWeek" {
+		// 结束时间的当周（范围 周一到周末）
+		currentDate = "toDate(event_time)>=toStartOfWeek(toDate('" + exploreHelper.EndDate + "'),1) and toDate(event_time)<=addDays(toStartOfWeek(toDate('" + exploreHelper.EndDate + "'),1),6) "
+		// 结束时间的上周（范围 周一到周末）
+		beforeDate = "toDate(event_time)>=subtractWeeks(toStartOfWeek(toDate('" + exploreHelper.EndDate + "'),1),1) and toDate(event_time)<=subtractWeeks(addDays(toStartOfWeek(toDate('" + exploreHelper.EndDate + "'),1),6),1) "
+	}
+
+	// 按月 是计算当月和上月
+	if exploreHelper.ByTime == "byMonth" {
+		// 结束时间的当月（范围 月初到月末）
+		currentDate = "toDate(event_time)>=toStartOfMonth(toDate('" + exploreHelper.EndDate + "')) and toDate(event_time)<=subtractDays(addMonths(toStartOfMonth(toDate('" + exploreHelper.EndDate + "')),1),1)"
+		// 结束时间的上月（范围 月初到月末）
+		beforeDate = "toDate(event_time)>=subtractMonths(toStartOfMonth(toDate('" + exploreHelper.EndDate + "')),1) and toDate(event_time)<=subtractMonths(subtractDays(addMonths(toStartOfMonth(toDate('" + exploreHelper.EndDate + "')),1),1),1)"
+	}
+	// 按季度 是计算当前季度和上个季度
+	if exploreHelper.ByTime == "byQuarter" {
+		currentDate = "toDate(event_time)>=toStartOfQuarter(toDate('" + exploreHelper.EndDate + "')) and toDate(event_time)<=subtractDays(addQuarters(toStartOfQuarter(toDate('" + exploreHelper.EndDate + "')),1),1)"
+		beforeDate = "toDate(event_time)>=subtractQuarters(toStartOfQuarter(toDate('" + exploreHelper.EndDate + "')),1) and toDate(event_time)<=subtractQuarters(subtractDays(addQuarters(toStartOfQuarter(toDate('" + exploreHelper.EndDate + "')),1),1),1)"
+	}
+	// 按年 是计算当年和上年
+	if exploreHelper.ByTime == "byYear" {
+		currentDate = "toDate(event_time)>=toStartOfYear(toDate('" + exploreHelper.EndDate + "')) and toDate(event_time)<=subtractDays(addYears(toStartOfYear(toDate('" + exploreHelper.EndDate + "')),1),1)"
+		beforeDate = "toDate(event_time)>=subtractYears(toStartOfYear(toDate('" + exploreHelper.EndDate + "')),1) and toDate(event_time)<=subtractYears(subtractDays(addYears(toStartOfYear(toDate('" + exploreHelper.EndDate + "')),1),1),1)"
+	}
+
+	sql = strings.ReplaceAll(sql, "{formula}", formula)
+	sql = strings.ReplaceAll(sql, "{currentDate}", currentDate)
+	sql = strings.ReplaceAll(sql, "{beforeDate}", beforeDate)
+	sql = strings.ReplaceAll(sql, "{CKTable}", GetCkTableByGameId(exploreHelper.GameId))
+	sql = strings.ReplaceAll(sql, "{sqlJoin}", exploreHelper.SqlJoin)
+	sql = strings.ReplaceAll(sql, "{sqlWhereNoDates}", exploreHelper.SqlWhereNoDates)
+	sql = strings.ReplaceAll(sql, "{dimension}", exploreHelper.Dimension)
+	sql = strings.ReplaceAll(sql, "{activeUserEventList}", ActiveUserEventList)
+
+	var resultList = []map[string]interface{}{}
+	err = exploreHelper.CkDb.Raw(sql).Scan(&resultList).Error
+	if err != nil {
+		exploreHelper.Log.Error(exploreHelper.Ctx, "ExploreBuildRingRatio:执行sql出错", map[string]interface{}{"err": err})
+		return
+	}
+	ringRatio = cast.ToString(resultList[0]["number"])
+	return
+}
+
+// 大于今天的显示-
+func ExploreTimeGtDate(exploreHelper *ExploreHelper, caseKey int, currentDateKey int, currentDateStr string, value string) (returnStr string) {
+	if !gslice.ContainString([]string{"retained", "ltv"}, exploreHelper.Modular) {
+		return value
+	}
+	if caseKey < 0 {
+		return value
+	}
+	count := caseKey
+	layoutStr := carbon.DateTimeLayout
+	dateStr := carbon.Parse(currentDateStr).AddDays(cast.ToInt(count)).ToString()
+	if exploreHelper.ByTime == "byWeek" {
+		layoutStr = carbon.DateLayout
+		dateStr = carbon.Parse(exploreHelper.DateList1[currentDateKey]).AddWeeks(cast.ToInt(count)).ToString()
+	}
+	if exploreHelper.ByTime == "byMonth" {
+		layoutStr = "2006-01"
+		dateStr = carbon.Parse(currentDateStr).AddMonths(cast.ToInt(count)).ToString()
+	}
+	if exploreHelper.ByTime == "byQuarter" {
+		layoutStr = carbon.DateLayout
+		dateStr = carbon.Parse(currentDateStr).AddQuarters(cast.ToInt(count)).ToString()
+	}
+	if exploreHelper.ByTime == "byYear" {
+		layoutStr = "2006"
+		dateStr = carbon.Parse(currentDateStr).AddQuarters(cast.ToInt(count)).ToString()
+	}
+	today := carbon.Now().Layout(layoutStr)
+	// fmt.Println("today==",layoutStr,"dateStr==",dateStr)
+	// 大于当天的显示 -
+	if carbon.Parse(dateStr).Gt(carbon.Parse(today)) {
+		return "-"
+	}
+	return value
+
+}
+
+// 生成时间段
+func ExploreFDate(exploreHelper *ExploreHelper) (fDateList, fDate, accountDay string) {
+	if exploreHelper.ByTime == "byDay" {
+		fDate = "toString(fdate) as dates"
+		fDateList = "arrayJoin(arrayMap(d -> addDays(toDate('{startDate}'), d),range({retainedCountDay})) as arr_ftime) as fdate"
+		accountDay = "toDate(event_time)"
+		return
+	}
+	if exploreHelper.ByTime == "byWeek" {
+		fDate = "toString(toYearWeek(fdate,1)) as dates"
+		fDateList = "arrayJoin(arrayMap(d -> addWeeks(toStartOfWeek(toDate('{startDate}'),1), d),range({retainedCountDay})) as arr_ftime) as fdate"
+		accountDay = "toStartOfWeek(toDate(event_time),1) "
+		return
+	}
+	if exploreHelper.ByTime == "byMonth" {
+		fDate = "substring(toString(fdate),1,7) as dates"
+		fDateList = "arrayJoin(arrayMap(d -> addMonths(toStartOfMonth(toDate('{startDate}')), d),range({retainedCountDay})) as arr_ftime) as fdate"
+		accountDay = "toStartOfMonth(toDate(event_time)) "
+		return
+	}
+
+	return
+}
