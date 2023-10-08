@@ -1,6 +1,53 @@
 package panel
 package panel
 package panel
+package panel
+
+import (
+	"git.code.tencent.com/liuzhenqiang/ghgame_framework/util/gstring"
+)
+
+var PayTotalAmountSql = []byte(`
+	SELECT 
+		{sqlField}
+		,round(sum(pay_price/100),2) as number
+	FROM
+		{CKTable} p 
+		{sqlJoin}
+	WHERE
+		{sqlWhere}
+		and event='deliver_goods'
+	GROUP BY {sqlGroup}
+	ORDER BY {sqlGroup}
+`)
+
+var PayTotalAmountColumnIndex = ""
+var PayTotalAmountColumnName = "付费总金额(美元)"
+
+// 探索-付费总金额
+func ExplorePayTotalAmount(exploreHelper *ExploreHelper) (result ResultExplore, err error) {
+
+	// 初始化
+	result = ExploreInitData(exploreHelper)
+
+	// 构建sql
+	exploreHelper.Sql = gstring.BytesToString(PayTotalAmountSql)
+	ExploreBuildSql(exploreHelper)
+
+	// 执行sql
+	ExploreRunSql(exploreHelper)
+
+	// 构建数据
+	result.Y = ExploreBuildOneColumnData(PayTotalAmountColumnName, exploreHelper)
+
+	// 列指标
+	result.ColumnIndex = []string{PayTotalAmountColumnIndex}
+
+	// 列名称
+	result.Indicators = ExploreBuildOneIndicators(PayTotalAmountColumnName, exploreHelper)
+
+	return
+}
 
 import (
 	"git.code.tencent.com/liuzhenqiang/ghgame_framework/util/gstring"
