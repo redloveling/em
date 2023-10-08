@@ -4,6 +4,146 @@ package panel
 package panel
 package panel
 package panel
+package panel
+
+import (
+	"git.code.tencent.com/liuzhenqiang/ghgame_framework/util/gslice"
+	"git.code.tencent.com/liuzhenqiang/ghgame_framework/util/gstring"
+	"github.com/spf13/cast"
+
+	"strings"
+)
+
+var SecondaryRetentionSql = []byte(`
+	SELECT
+		{retentionSelectDate}
+        IF(isNaN(sum(r[2])/sum(r[1]) as t) ,0,IF(isInfinite(t),1,round(t,4))) number
+		{sqlFieldNoDates}
+	FROM
+        (
+        	SELECT
+                {sqlOutField}
+				,{todayRetention}
+				,{dimension}
+        	FROM
+                (
+                	SELECT	
+						{joinDates}
+						{sqlOutField},
+                        account_day,
+                        event,
+                        {dimension}
+                	FROM
+                        (
+                        SELECT
+							{sqlField}
+							,{dimension}
+							,event
+							,{accountDay}  account_day
+                        FROM
+							{CKTable} p
+							{sqlJoin} 	
+                        WHERE
+							event in ('login','create_role','register')
+							{sqlWhereNoDates}
+							{retentionDate}
+                        )
+				)
+        	GROUP BY
+                {sqlOutGroup},{dimension}
+  		)
+	GROUP BY
+        {sqlOutGroup}
+	ORDER BY
+        {sqlOutGroup}
+`)
+
+var SecondaryRetentionColumnIndex = ""
+var SecondaryRetentionColumnName = "次留"
+
+// 次日留存：次留=第1天还活跃的当天(第0天)新增用户数 / 选取日当天（第0天）新增用户数
+//         次留=第1天还活跃的当天(第0天)创角用户数/ 选取日当天（第0天）创角用户数----（角色id维度）
+func ExploreSecondaryRetention(exploreHelper *ExploreHelper) (result ResultExplore, err error) {
+	if gslice.ContainString([]string{"byQuarter", "byYear"}, exploreHelper.ByTime) {
+		exploreHelper.ExecMark = true
+	}
+
+	// 初始化
+	result = ExploreInitData(exploreHelper)
+
+	ExploreSecondaryRetentionBuildSql(exploreHelper)
+	// 执行sql
+	if err = ExploreRunSql(exploreHelper); err != nil {
+		return
+	}
+	// 构建数据
+	result.Y = ExploreBuildOneColumnData(SecondaryRetentionColumnName, exploreHelper)
+
+	// 列指标
+	result.ColumnIndex = []string{SecondaryRetentionColumnIndex}
+
+	// 列名称
+	result.Indicators = ExploreBuildOneIndicators(SecondaryRetentionColumnName, exploreHelper)
+
+	return
+}
+func ExploreSecondaryRetentionBuildSql(exploreHelper *ExploreHelper) {
+	exploreHelper.Sql = gstring.BytesToString(SecondaryRetentionSql)
+	joinDates := ""
+	todayRetention := ""
+	secondRetention := ""
+	accountDay := ""
+	// 角色id维度用create_role事件 其他的用注册事件
+	eventStr := "register"
+	if exploreHelper.Dimension == "role_id" {
+		eventStr = "create_role"
+	}
+	dateWord := ""
+	retentionSelectDate:=""
+	if exploreHelper.ByTime == "byDay" {
+		joinDates = "arrayJoin(arrayMap(d -> addDays(toDate('{startDate}'), d),range({retainedCountDay})) as arr_ftime) as dates,"
+		todayRetention = "retention(account_day = dates and event = '{eventStr}',account_day = addDays(dates, {retentionDay}) and event = 'login')as r"
+		secondRetention = "retention(account_day = addDays(dates, 1) and event = 'register',account_day = addDays(dates, 1))as r1"
+		accountDay = "toDate(event_time)"
+		dateWord = "addDays"
+		retentionSelectDate="toDate(dates) as dates,"
+	}
+	if exploreHelper.ByTime == "byWeek" {
+		joinDates = "arrayJoin(arrayMap(d -> addWeeks(toStartOfWeek(toDate('{startDate}'),1), d),range({retainedCountDay})) as arr_ftime) as dates,"
+		todayRetention = "retention(account_day = dates and event = '{eventStr}',account_day = addWeeks(dates, {retentionDay}) and event = 'login')as r"
+		secondRetention = "retention(account_day = addWeeks(dates, 1) and event = 'register',account_day = addWeeks(dates, 1))as r1"
+		accountDay = "toStartOfWeek(toDate(event_time),1) "
+		dateWord = "addWeeks"
+		retentionSelectDate="toYearWeek(toDateTime(FROM_UNIXTIME( dates, '%Y-%m-%d' )),1) as dates,"
+	}
+	if exploreHelper.ByTime == "byMonth" {
+		joinDates = "arrayJoin(arrayMap(d -> addMonths(toStartOfMonth(toDate('{startDate}')), d),range({retainedCountDay})) as arr_ftime) as dates,"
+		todayRetention = "retention(account_day = dates and event = '{eventStr}',account_day = addMonths(dates, {retentionDay}) and event = 'login')as r"
+		secondRetention = "retention(account_day = addMonths(dates, 1) and event = 'register',account_day = addMonths(dates, 1))as r1"
+		accountDay = "toStartOfMonth(toDate(event_time)) "
+		dateWord = "addMonths"
+		retentionSelectDate="FROM_UNIXTIME( dates, '%Y-%m' ) as dates,"
+	}
+	retentionDate:=" and toDate(event_time)>="+exploreHelper.CkStartDate
+	// 次留因为要算7留也算到第7天
+	retentionDate += " and toDate(event_time)<=toDate(" + dateWord + "(" + exploreHelper.CkEndDate + ", 7))"
+
+
+	retainedCountDay := "toUInt32(dateDiff('day',toDate('{startDate}'),toDate('{endDate}'))+7)"
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{todayRetention}", todayRetention)
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{secondRetention}", secondRetention)
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{accountDay}", accountDay)
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{joinDates}", joinDates)
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{retainedCountDay}", retainedCountDay)
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{eventStr}", eventStr)
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{retentionDay}", cast.ToString(exploreHelper.RetentionDay))
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{retentionDate}", retentionDate)
+	exploreHelper.Sql = strings.ReplaceAll(exploreHelper.Sql, "{retentionSelectDate}", retentionSelectDate)
+
+
+	ExploreBuildSql(exploreHelper)
+	return
+}
 
 import (
 	"strings"
