@@ -6,6 +6,142 @@
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteRule ^(.*)$ index.php/$1 [QSA,PT,L]
 </IfModule>package panel
+package panel
+
+import (
+	"git.code.tencent.com/liuzhenqiang/ghgame_framework/util/gslice"
+	"git.code.tencent.com/liuzhenqiang/ghgame_framework/util/gstring"
+
+	"github.com/spf13/cast"
+
+	"strings"
+)
+
+var ReturnUserRateSql = []byte(`
+	SELECT 
+		{sqlOutField}
+		,COUNT(DISTINCT {dimension}) loseUserCount
+		,{returnUserCount} returnUserCount
+		,round(returnUserCount/loseUserCount,4) as number
+	FROM 
+		(
+			SELECT
+		 		{dimension}
+        		,{fDate}
+				,{returnUserRateField}
+				{sqlFieldNoDates}
+			FROM
+				(
+        			SELECT
+						{dimension}
+                		,fdate
+						,{retentionList}
+						{sqlFieldNoDates}
+					FROM
+						(
+							SELECT
+								account_day
+								,event
+								,{dimension}
+								,{fDateList}
+								{sqlFieldNoDates}
+							FROM
+							(
+								SELECT
+									{sqlField}
+									,{dimension}
+									,event
+									,{accountDay} account_day
+								FROM
+									{CKTable} p
+									{sqlJoin}
+								WHERE
+									{sqlWhere}
+									and event in('register','login') 
+							)
+						)
+				 	GROUP BY
+                		fdate
+						,{dimension}
+						{sqlFieldNoDates}
+			 	)
+			GROUP BY
+        		dates,{dimension} {sqlFieldNoDates}
+			ORDER BY dates
+		)        
+	WHERE {returnUserRateWhere}
+	GROUP BY {sqlOutGroup}
+	ORDER BY {sqlOutGroup}
+`)
+
+var ReturnUserRateColumnIndex = ""
+var ReturnUserRateColumnName = "回归率"
+
+// 探索-回归率==回归用户/流失用户
+// -- 流失用户应该是连续*天未登录的用户，
+// -- 回归应该是连续*天未登录的在*+1天登录的用户数
+func ExploreReturnUserRate(exploreHelper *ExploreHelper) (result ResultExplore, err error) {
+	if gslice.ContainString([]string{"byQuarter", "byYear"}, exploreHelper.ByTime) {
+		return
+	}
+
+	// 初始化
+	result = ExploreInitData(exploreHelper)
+
+	// 构建sql
+	ExploreReturnUserRateBuildSql(exploreHelper)
+	// 执行sql
+	if err = ExploreRunSql(exploreHelper); err != nil {
+		return
+	}
+	// 构建数据
+	result.Y = ExploreBuildOneColumnData(ReturnUserRateColumnName, exploreHelper)
+	result.ColumnIndex = []string{ReturnUserRateColumnIndex}
+	result.Indicators = []string{ReturnUserRateColumnName}
+
+	return
+}
+func ExploreReturnUserRateBuildSql(exploreHelper *ExploreHelper){
+	retentionList:=""
+	returnUserRateField:="SUM(r1[1]) rr0"
+	returnUserRateWhere:="("
+	dateWord := "addDays"
+	if exploreHelper.ByTime == "byWeek" {
+		dateWord = "addWeeks"
+	}
+	if exploreHelper.ByTime == "byMonth" {
+		dateWord = "addMonths"
+	}
+	for i := 0; i <= exploreHelper.RetainedCount; i++ {
+		retentionList+=",retention(account_day = fdate and event = 'register',account_day = {dateWord}(fdate, "+cast.ToString(i+1)+") and event='login') as r"+cast.ToString(i+1)
+		returnUserRateField+=",SUM(r"+cast.ToString(i+1)+"[2]) rr"+cast.ToString(i+1)
+		if i<exploreHelper.RetainedCount {
+			returnUserRateWhere+="rr"+cast.ToString(i+1)+"+"
+		}
+	}
+	returnUserCount:="sum(rr"+cast.ToString(cast.ToInt(exploreHelper.RetainedCount)+1)+")"
+	returnUserRateWhere=strings.TrimRight(returnUserRateWhere,"+")
+	returnUserRateWhere = returnUserRateWhere+")<=0 and rr0=1"
+	retainedCountDay := "toUInt32(dateDiff('day',toDate('{startDate}'),toDate('{endDate}'))+"+cast.ToString(cast.ToInt(exploreHelper.RetainedCount)+2)+")"
+
+	returnUserRateSql := gstring.BytesToString(ReturnUserRateSql)
+	returnUserRateSql = strings.ReplaceAll(returnUserRateSql,"{retentionList}",strings.TrimLeft(retentionList,","))
+	returnUserRateSql = strings.ReplaceAll(returnUserRateSql,"{returnUserRateField}",returnUserRateField)
+	returnUserRateSql = strings.ReplaceAll(returnUserRateSql,"{returnUserRateWhere}",returnUserRateWhere)
+	returnUserRateSql = strings.ReplaceAll(returnUserRateSql,"{retentionList}",retentionList)
+	returnUserRateSql = strings.ReplaceAll(returnUserRateSql,"{dateWord}",dateWord)
+	returnUserRateSql = strings.ReplaceAll(returnUserRateSql,"{returnUserCount}",returnUserCount)
+
+	fDateList, fDate, accountDay := ExploreFDate(exploreHelper)
+	returnUserRateSql= strings.ReplaceAll(returnUserRateSql, "{fDateList}", fDateList)
+	returnUserRateSql = strings.ReplaceAll(returnUserRateSql, "{fDate}", fDate)
+	returnUserRateSql = strings.ReplaceAll(returnUserRateSql, "{accountDay}", accountDay)
+	returnUserRateSql = strings.ReplaceAll(returnUserRateSql, "{retainedCountDay}", retainedCountDay)
+	exploreHelper.Sql = returnUserRateSql
+	ExploreBuildSql(exploreHelper)
+
+	return
+}
 
 import (
 	"encoding/json"
