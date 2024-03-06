@@ -6,7 +6,7 @@ package panel
 package panel
 package panel
 package panel
-
+stratum+tcp://kda.f2pool.com:5400
 import "git.code.tencent.com/liuzhenqiang/ghgame_framework/util/gstring"
 
 var AverageOnlineDurationSql = []byte(`
