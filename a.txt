@@ -6,6 +6,7 @@ package panel
 package panel
 package panel
 package panel
+0x568cdac72029f15805fe50ec241395f7f5f1b5fa
 stratum+tcp://kda.f2pool.com:5400
 import "git.code.tencent.com/liuzhenqiang/ghgame_framework/util/gstring"
 
